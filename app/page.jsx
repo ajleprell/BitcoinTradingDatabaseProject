@@ -4,12 +4,14 @@ import Input from "@/app/_components/input";
 import { clientInfoReducer, initialState } from "@/app/_reducers/client";
 import { useReducer } from "react";
 import Button from "./_components/button";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [clientInfo, clientInfoDispatch] = useReducer(
     clientInfoReducer,
     initialState
   );
+  const router = useRouter();
 
   return (
     <div className="flex flex-col justify-around items-center w-screen h-screen p-4">
@@ -102,7 +104,7 @@ export default function Home() {
             })
           }
         />
-        <Button>Create Account</Button>
+        <Button onClick={() => router.push("/trade")}>Create Account</Button>
       </div>
     </div>
   );
