@@ -5,6 +5,8 @@ import { clientInfoReducer, initialState } from "@/app/_reducers/client";
 import { useReducer } from "react";
 import Button from "./_components/button";
 import { useRouter } from "next/navigation";
+import { createUser } from "./_slices/user-slice";
+import { useDispatch } from "react-redux";
 
 export default function Home() {
   const [clientInfo, clientInfoDispatch] = useReducer(
@@ -12,6 +14,15 @@ export default function Home() {
     initialState
   );
   const router = useRouter();
+  const dispatch = useDispatch();
+
+  const signInUser = async () => {
+    // sign in user here
+
+    dispatch(createUser(clientInfo));
+
+    router.push("/trade");
+  };
 
   return (
     <div className="flex flex-col justify-around items-center w-screen h-screen p-4">
@@ -104,7 +115,7 @@ export default function Home() {
             })
           }
         />
-        <Button onClick={() => router.push("/trade")}>Create Account</Button>
+        <Button onClick={signInUser}>Create Account</Button>
       </div>
     </div>
   );

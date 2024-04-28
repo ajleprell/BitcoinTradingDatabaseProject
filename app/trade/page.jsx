@@ -8,34 +8,37 @@ import CurrencyInput from "react-currency-input-field";
 import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-const DUMMY_DATA = {
-  name: "Tariq Mahamid",
-  accountType: "GOLD",
-  bitcoin: 10,
-};
+import { useDispatch, useSelector } from "react-redux";
+import { updateBitcoinAmount } from "../_slices/transaction-slice";
 
 const Page = () => {
-  const { name, accountType, bitcoin } = DUMMY_DATA;
+  const userInfo = useSelector((state) => state.user);
+
+  const { firstName, lastName, accountType, bitcoin } = userInfo;
   const [commissionAmount, setCommissionAmount] = useState("");
   const [transactionFee, setTransactionFee] = useState("Fiat Currency");
   const [totalTradeAmount, setTotalTradeAmount] = useState("0.00");
+  const dispatch = useDispatch();
   const router = useRouter();
 
   const tradeAmount = () => {
+    const parsedTotalTradeAmount = parseFloat(
+      totalTradeAmount.replace(/,/g, "")
+    );
+
     if (commissionAmount === "") {
       toast.error("Please enter bitcoin amount");
       return;
-    } else if (DUMMY_DATA.bitcoin < commissionAmount) {
-      toast.error("Insufficient balance");
+    } else if (bitcoin < totalTradeAmount) {
+      toast.error("Insufficient bitcoin");
       return;
     }
 
-    if (transactionFee === "Fiat Currency") {
-      setTotalTradeAmount(commissionAmount * 1000);
-    } else {
-      setTotalTradeAmount(commissionAmount * 500);
-    }
+    console.log("Totla Trade Amount:", parsedTotalTradeAmount);
+
+    dispatch(updateBitcoinAmount(parsedTotalTradeAmount));
+
+    router.push("/confirm-transaction");
   };
 
   useEffect(() => {
@@ -79,7 +82,9 @@ const Page = () => {
           />
         </div>
         <div className="flex flex-col gap-y-4 text-center">
-          <div className="font-bold text-[60px]">{name}</div>
+          <div className="font-bold text-[60px]">
+            {firstName + " " + lastName}
+          </div>
           <div className={`font-medium text-[30px] `}>
             Account Type:{" "}
             <span
@@ -114,19 +119,12 @@ const Page = () => {
             </span>{" "}
             {totalTradeAmount}
           </div>
-          <Button
-            className="w-full"
-            onClick={() =>
-              router.push(
-                "/confirm-transaction?transactionAmount=" + totalTradeAmount
-              )
-            }
-          >
+          <Button className="w-full" onClick={() => tradeAmount()}>
             Trade
           </Button>
         </div>
       </div>
-      <ToastContainer />
+      <ToastContainer position="bottom-center" />
     </div>
   );
 };
