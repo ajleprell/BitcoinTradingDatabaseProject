@@ -10,6 +10,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useDispatch, useSelector } from "react-redux";
 import { updateBitcoinAmount } from "../_slices/transaction-slice";
+import addCommas from "../_reusable-functions/add-commas";
 
 const Page = () => {
   const userInfo = useSelector((state) => state.user);
@@ -36,7 +37,13 @@ const Page = () => {
 
     console.log("Totla Trade Amount:", parsedTotalTradeAmount);
 
-    dispatch(updateBitcoinAmount(parsedTotalTradeAmount));
+    dispatch(
+      updateBitcoinAmount({
+        usdAmount: commissionAmount,
+        feeType: transactionFee,
+        bitcoinAmount: parsedTotalTradeAmount,
+      })
+    );
 
     router.push("/confirm-transaction");
   };
@@ -56,11 +63,7 @@ const Page = () => {
       console.log("Commision Amount:", commissionAmount);
       console.log("Trade Amount:", tradeAmount);
 
-      setTotalTradeAmount(
-        commissionAmount
-          ? tradeAmount.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-          : "0.00"
-      );
+      setTotalTradeAmount(commissionAmount ? addCommas(tradeAmount) : "0.00");
     };
 
     fetchUpdateTradeAmount();
@@ -78,7 +81,6 @@ const Page = () => {
             value={commissionAmount}
             onValueChange={(value, name, values) => setCommissionAmount(value)}
             className="bg-[#F1F1F1] rounded-[14px] p-4 outline-none w-[450px]"
-            prefix="$"
           />
         </div>
         <div className="flex flex-col gap-y-4 text-center">

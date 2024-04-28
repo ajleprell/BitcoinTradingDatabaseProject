@@ -13,7 +13,7 @@ export const userSlice = createSlice({
     state: "",
     zipCode: "",
     accountType: "SILVER",
-    bitcoin: 0,
+    bitcoin: 9999,
   },
   reducers: {
     createUser: (state, action) => {

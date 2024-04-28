@@ -8,6 +8,7 @@ export const initialState = {
   city: "",
   state: "",
   zipCode: "",
+  password: "",
 };
 
 export const clientInfoReducer = (state = {}, action) => {

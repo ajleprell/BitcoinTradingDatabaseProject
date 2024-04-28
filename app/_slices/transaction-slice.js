@@ -3,11 +3,15 @@ import { createSlice } from "@reduxjs/toolkit";
 export const bitcoinAmount = createSlice({
   name: "bitcoinAmount",
   initialState: {
+    usdAmount: 0,
+    feeType: "Fiat Currency",
     bitcoinAmount: 0,
   },
   reducers: {
     updateBitcoinAmount: (state, action) => {
-      state.bitcoinAmount = action.payload;
+      state.usdAmount = action.payload.usdAmount;
+      state.feeType = action.payload.feeType;
+      state.bitcoinAmount = action.payload.bitcoinAmount;
     },
   },
 });

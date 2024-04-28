@@ -7,6 +7,7 @@ import Button from "./_components/button";
 import { useRouter } from "next/navigation";
 import { createUser } from "./_slices/user-slice";
 import { useDispatch } from "react-redux";
+import { createClient } from "@supabase/supabase-js";
 
 export default function Home() {
   const [clientInfo, clientInfoDispatch] = useReducer(
@@ -115,7 +116,22 @@ export default function Home() {
             })
           }
         />
-        <Button onClick={signInUser}>Create Account</Button>
+        <Input
+          title="Password"
+          value={clientInfo.password}
+          setValue={(password) =>
+            clientInfoDispatch({
+              type: "UPDATE",
+              payload: { password },
+            })
+          }
+        />
+        <Button
+          className="col-span-full w-max justify-self-end"
+          onClick={signInUser}
+        >
+          Create Account
+        </Button>
       </div>
     </div>
   );
