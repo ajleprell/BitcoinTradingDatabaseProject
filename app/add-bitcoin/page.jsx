@@ -11,13 +11,17 @@ import { setTransaction } from "../_slices/view-transaction-slice";
 import CurrencyInput from "react-currency-input-field";
 import Dropdown from "../_components/dropdown";
 import { updateBalance } from "../_slices/user-slice";
+import { updateTradingUser } from "../_slices/currently-trading-user-slice";
 
 const PASSWORD = "Test Password";
 
 const AddBitcoin = () => {
   const router = useRouter();
+  const tradingUser = useSelector((state) => state.currentlyTradingUser);
   const selectedUser = useSelector((state) => state.selectedUser);
   const accountType = useSelector((state) => state.account.accountType);
+
+  console.log("Tradign User:", tradingUser);
 
   const [commissionAmount, setCommissionAmount] = useState("");
   const [transactionFee, setTransactionFee] = useState(null);
@@ -70,8 +74,9 @@ const AddBitcoin = () => {
 
     if (accountType === "Client") {
       dispatch(
-        updateBalance({
-          bitcoin: selectedUser.bitcoin + bitcoinAmount,
+        updateTradingUser({
+          ...tradingUser,
+          bitcoin: tradingUser.bitcoin + bitcoinAmount,
         })
       );
 

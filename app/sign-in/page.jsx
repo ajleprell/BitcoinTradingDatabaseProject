@@ -9,6 +9,7 @@ import { createUser } from "../_slices/user-slice";
 import { useDispatch, useSelector } from "react-redux";
 import Dropdown from "../_components/dropdown";
 import { updateAccountType } from "../_slices/account-slice";
+import { updateTradingUser } from "../_slices/currently-trading-user-slice";
 
 const EXISTING_TRADERS = [
   {
@@ -70,6 +71,10 @@ export default function Home() {
     dispatch(createUser({ ...clientInfo, traderInfo: selectedTrader }));
 
     if (accountType === "Client") {
+      dispatch(
+        updateTradingUser({ ...clientInfo, traderInfo: selectedTrader })
+      ); // User that we are trading with in the trade page
+
       router.push("/trade");
     } else {
       router.push("/trader");
@@ -101,10 +106,11 @@ export default function Home() {
       },
     };
 
-    dispatch(createUser(signedInUser));
-    dispatch(updateAccountType(accountType));
+    dispatch(createUser(signedInUser)); // User that is signed in
 
     if (accountType === "Client") {
+      dispatch(updateTradingUser(signedInUser)); // User that we are trading with in the trade page
+
       router.push("/trade");
     } else {
       router.push("/trader");

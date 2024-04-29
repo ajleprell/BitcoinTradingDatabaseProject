@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 export const currentlyTradingUserSlice = createSlice({
   name: "tradingUserSlice",
   initialState: {
+    id: 0,
     firstName: "",
     lastName: "",
     phoneNumber: "",
@@ -21,6 +22,7 @@ export const currentlyTradingUserSlice = createSlice({
   },
   reducers: {
     updateTradingUser: (state, action) => {
+      state.id = action.payload.id;
       state.firstName = action.payload.firstName;
       state.lastName = action.payload.lastName;
       state.phoneNumber = action.payload.phoneNumber;

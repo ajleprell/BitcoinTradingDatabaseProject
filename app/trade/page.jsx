@@ -16,6 +16,8 @@ import "react-toastify/dist/ReactToastify.css";
 const Page = () => {
   const userInfo = useSelector((state) => state.currentlyTradingUser);
 
+  console.log("User Info:", userInfo);
+
   const { firstName, lastName, accountType, bitcoin, traderInfo } = userInfo;
   const [commissionAmount, setCommissionAmount] = useState("");
   const [transactionFee, setTransactionFee] = useState(null);

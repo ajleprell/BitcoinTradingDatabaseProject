@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 const CLIENT_INFO = {
   name: "John Doe",
+  accountType: "SILVER",
   transactions: [
     {
       id: 1,
@@ -45,7 +46,7 @@ const CLIENT_INFO = {
 
 const ViewSpecificClient = () => {
   const { clientID } = useParams();
-  const {id, name} = useSelector((state) => state.selectedClient);
+  const { id, name } = useSelector((state) => state.user);
   const [client, setClient] = useState(null);
   const router = useRouter();
   const dispatch = useDispatch();
@@ -65,35 +66,19 @@ const ViewSpecificClient = () => {
   if (!client) return <div>Loading...</div>;
 
   const tradeWithClient = () => {
-
-   initialState: {
-    firstName: "",
-    lastName: "",
-    phoneNumber: "",
-    cellPhoneNumber: "",
-    email: "",
-    streetAddress: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    accountType: "SILVER",
-    traderInfo: {
-      id: "",
-      title: "",
-    },
-    bitcoin: 9999,
-  },\
-
-    dispatch(updateTradingUser({
-      firstName: client.name.split(" ")[0],
-      lastName: client.name.split(" ")[1],
-      traderInfo: {
+    dispatch(
+      updateTradingUser({
         id: clientID,
-        title: "Trader",
-      },
-      bitcoin: 9999,
-    
-    }));
+        firstName: client.name.split(" ")[0],
+        lastName: client.name.split(" ")[1],
+        traderInfo: {
+          id: id,
+          title: name,
+        },
+        bitcoin: 9999,
+        accountType: CLIENT_INFO.accountType,
+      })
+    );
 
     router.push(`/trade`);
   };
