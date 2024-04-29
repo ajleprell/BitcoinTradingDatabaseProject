@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-export const userSlice = createSlice({
-  name: "user",
+export const currentlyTradingUserSlice = createSlice({
+  name: "tradingUserSlice",
   initialState: {
     firstName: "",
     lastName: "",
@@ -20,7 +20,7 @@ export const userSlice = createSlice({
     bitcoin: 9999,
   },
   reducers: {
-    createUser: (state, action) => {
+    updateTradingUser: (state, action) => {
       state.firstName = action.payload.firstName;
       state.lastName = action.payload.lastName;
       state.phoneNumber = action.payload.phoneNumber;
@@ -32,12 +32,9 @@ export const userSlice = createSlice({
       state.zipCode = action.payload.zipCode;
       state.traderInfo = action.payload.traderInfo;
     },
-    updateBalance: (state, action) => {
-      state.bitcoin = action.payload.bitcoin;
-    },
   },
 });
 
-export const { createUser, updateBalance } = userSlice.actions;
+export const { updateTradingUser } = currentlyTradingUserSlice.actions;
 
-export default userSlice.reducer;
+export default currentlyTradingUserSlice.reducer;

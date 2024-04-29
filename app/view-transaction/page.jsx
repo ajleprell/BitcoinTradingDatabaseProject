@@ -8,9 +8,11 @@ import addCommas from "../_reusable-functions/add-commas";
 
 const ViewTransaction = () => {
   const transaction = useSelector((state) => state.viewTransaction);
+  const accountType = useSelector((state) => state.account.accountType);
   const router = useRouter();
 
-  const { date, bitcoinAmount, usdAmount, name, commissionType } = transaction;
+  const { date, bitcoinAmount, usdAmount, name, commissionType, traderName } =
+    transaction;
 
   console.log("Transaction:", transaction);
 
@@ -29,7 +31,7 @@ const ViewTransaction = () => {
           <h1 className="text-4xl font-medium">
             Commission Type: <span className="font-bold">{commissionType}</span>
           </h1>
-          {commissionType === "Fiat Currency" && (
+          {commissionType === "Fiat Currency" && usdAmount && (
             <h1 className="text-4xl font-medium">
               Amount in USD:{" "}
               <span className="font-bold">
@@ -38,13 +40,18 @@ const ViewTransaction = () => {
             </h1>
           )}
           <h1 className="text-4xl font-medium">
-            Trader Name: <span className="font-bold">{name}</span>
+            Client Name: <span className="font-bold">{name}</span>
+          </h1>
+          <h1 className="text-4xl font-medium">
+            Trader: <span className="font-bold">{traderName}</span>
           </h1>
         </div>
         <div className="flex flex-col justify-end gap-y-12">
           <Button
             className="w-max self-end"
-            onClick={() => router.push("/trade")}
+            onClick={() =>
+              router.push(accountType === "Client" ? "/trade" : "/trader")
+            }
           >
             Back
           </Button>

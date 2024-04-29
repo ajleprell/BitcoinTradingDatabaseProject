@@ -8,16 +8,16 @@ export const viewTransactionSlice = createSlice({
     usdAmount: "",
     name: "",
     commissionType: "",
+    traderName: "",
   },
   reducers: {
     setTransaction: (state, action) => {
-      console.log("State:", action.payload);
-
       state.date = action.payload.date;
       state.bitcoinAmount = action.payload.bitcoinAmount;
       state.usdAmount = action.payload.usdAmount;
       state.name = action.payload.name;
       state.commissionType = action.payload.commissionType;
+      state.traderName = action.payload.traderName;
     },
   },
 });

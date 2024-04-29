@@ -16,7 +16,9 @@ const ConfirmTransaction = () => {
   const { bitcoinAmount, usdAmount, feeType } = useSelector(
     (state) => state.transaction
   );
-  const { firstName, lastName } = useSelector((state) => state.user);
+  const { firstName, lastName, traderInfo } = useSelector(
+    (state) => state.currentlyTradingUser
+  );
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
 
@@ -39,6 +41,7 @@ const ConfirmTransaction = () => {
         bitcoinAmount,
         usdAmount,
         commissionType: feeType,
+        traderName: traderInfo.title,
         date: new Date().toLocaleDateString(),
       })
     );

@@ -18,12 +18,12 @@ const Input = ({
   );*/
 
   return (
-    <div className="flex flex-col gap-y-2 font-interitems-end">
+    <div className="flex flex-col gap-y-2 font-inter">
       <div className="font-bold text-xl">{title}</div>
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="bg-[#F3F3F3] p-4 rounded-2xl outline-none w-3/4"
+        className=" bg-[#F1F1F1] rounded-[14px] p-4 outline-none w-[450px] text-base"
         placeholder={"Input " + title}
         {...rest}
       />

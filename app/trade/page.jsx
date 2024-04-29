@@ -7,17 +7,18 @@ import Button from "../_components/button";
 import CurrencyInput from "react-currency-input-field";
 import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useDispatch, useSelector } from "react-redux";
 import { updateBitcoinAmount } from "../_slices/transaction-slice";
 import addCommas from "../_reusable-functions/add-commas";
 
-const Page = () => {
-  const userInfo = useSelector((state) => state.user);
+import "react-toastify/dist/ReactToastify.css";
 
-  const { firstName, lastName, accountType, bitcoin } = userInfo;
+const Page = () => {
+  const userInfo = useSelector((state) => state.currentlyTradingUser);
+
+  const { firstName, lastName, accountType, bitcoin, traderInfo } = userInfo;
   const [commissionAmount, setCommissionAmount] = useState("");
-  const [transactionFee, setTransactionFee] = useState("Fiat Currency");
+  const [transactionFee, setTransactionFee] = useState(null);
   const [totalTradeAmount, setTotalTradeAmount] = useState("0.00");
   const dispatch = useDispatch();
   const router = useRouter();
@@ -27,7 +28,12 @@ const Page = () => {
       totalTradeAmount.replace(/,/g, "")
     );
 
-    if (commissionAmount === "") {
+    console.log("Bitcoin:", bitcoin);
+
+    if (!transactionFee) {
+      toast.error("Please select a commission type");
+      return;
+    } else if (commissionAmount === "") {
       toast.error("Please enter bitcoin amount");
       return;
     } else if (bitcoin < totalTradeAmount) {
@@ -40,7 +46,7 @@ const Page = () => {
     dispatch(
       updateBitcoinAmount({
         usdAmount: commissionAmount,
-        feeType: transactionFee,
+        feeType: transactionFee.title,
         bitcoinAmount: parsedTotalTradeAmount,
       })
     );
@@ -56,8 +62,8 @@ const Page = () => {
       const multiplier = (await response.json()).bpi.USD.rate_float;
 
       const tradeAmount =
-        transactionFee === "Fiat Currency"
-          ? (commissionAmount / multiplier).toFixed(2)
+        transactionFee && transactionFee.title === "Fiat Currency"
+          ? (commissionAmount / multiplier).toFixed(8)
           : commissionAmount.toString();
 
       console.log("Commision Amount:", commissionAmount);
@@ -101,6 +107,9 @@ const Page = () => {
             Currency In Account: {bitcoin} Bitcoin
           </div>
           <div className={`font-medium text-[30px]`}>
+            Trader: {traderInfo.title}
+          </div>
+          <div className={`font-medium text-[30px]`}>
             {new Date().toLocaleDateString()}
           </div>
         </div>
@@ -109,7 +118,10 @@ const Page = () => {
         <div className="flex flex-col gap-y-[21px]">
           <div className="font-bold text-[40px]">Commission Type</div>
           <Dropdown
-            options={["Fiat Currency", "Bitcoin"]}
+            options={[
+              { id: 1, title: "Fiat Currency" },
+              { id: 2, title: "Bitcoin" },
+            ]}
             selectedValue={transactionFee}
             setSelectedValue={setTransactionFee}
           />
@@ -124,6 +136,15 @@ const Page = () => {
           <Button className="w-full" onClick={() => tradeAmount()}>
             Trade
           </Button>
+          <div>
+            Need more bitcoin?{" "}
+            <span
+              className="text-blue-500 hover:text-blue-600 hover:underline cursor-pointer"
+              onClick={() => router.push("/add-bitcoin")}
+            >
+              Add Bitcoin
+            </span>
+          </div>
         </div>
       </div>
       <ToastContainer position="bottom-center" />
