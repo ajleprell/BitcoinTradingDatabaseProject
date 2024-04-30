@@ -72,7 +72,11 @@ export default function Home() {
 
     if (accountType === "Client") {
       dispatch(
-        updateTradingUser({ ...clientInfo, traderInfo: selectedTrader })
+        updateTradingUser({
+          ...clientInfo,
+          traderInfo: selectedTrader,
+          bitcoin: 9999,
+        })
       ); // User that we are trading with in the trade page
 
       router.push("/trade");
