@@ -6,43 +6,43 @@ import { updateTradingUser } from "@/app/_slices/currently-trading-user-slice";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
-const CLIENT_INFO = {
-  name: "John Doe",
-  accountType: "SILVER",
-  transactions: [
-    {
-      id: 1,
-      date: "4/10/2024",
-      usdAmount: 100,
-      type: "Deposit",
-      commissionType: "Fiat Currency",
-      bitcoinAmount: 0.0001,
-      clientName: "Ronald Ralph",
-      traderName: "John Doe",
-    },
-    {
-      id: 2,
-      date: "4/1/2024",
-      usdAmount: 200,
-      type: "Withdrawal",
-      commissionType: "Bitcoin",
-      bitcoinAmount: 0.0002,
-      clientName: "Ronald Ralph",
-      traderName: "Jane Doe",
-    },
-    {
-      id: 3,
-      date: "3/1/2024",
-      usdAmount: 300,
-      type: "Deposit",
-      commissionType: "Fiat Currency",
-      bitcoinAmount: 0.0003,
-      clientName: "Ronald Ralph",
-      traderName: "Steve Smith",
-    },
-  ],
-};
+import {getClientInfo} from "../../utils/supabase/dbcalls"
+// const client = {
+//   name: "John Doe",
+//   accountType: "SILVER",
+//   transactions: [
+//     {
+//       id: 1,
+//       date: "4/10/2024",
+//       usdAmount: 100,
+//       type: "Deposit",
+//       commissionType: "Fiat Currency",
+//       bitcoinAmount: 0.0001,
+//       clientName: "Ronald Ralph",
+//       traderName: "John Doe",
+//     },
+//     {
+//       id: 2,
+//       date: "4/1/2024",
+//       usdAmount: 200,
+//       type: "Withdrawal",
+//       commissionType: "Bitcoin",
+//       bitcoinAmount: 0.0002,
+//       clientName: "Ronald Ralph",
+//       traderName: "Jane Doe",
+//     },
+//     {
+//       id: 3,
+//       date: "3/1/2024",
+//       usdAmount: 300,
+//       type: "Deposit",
+//       commissionType: "Fiat Currency",
+//       bitcoinAmount: 0.0003,
+//       clientName: "Ronald Ralph",
+//       traderName: "Steve Smith",
+//     },
+//   ],
+// };
 
 const ViewSpecificClient = () => {
   const { clientID } = useParams();
@@ -54,14 +54,14 @@ const ViewSpecificClient = () => {
   useEffect(() => {
     const fetchClientInfo = async () => {
       // Fetch Client Info Here
-
-      setClient(CLIENT_INFO);
+      const client_info = await getClientInfo(clientID)
+      
+      setClient(client_info);
     };
 
     fetchClientInfo();
   });
 
-  console.log("Client ID:", clientID);
 
   if (!client) return <div>Loading...</div>;
 
@@ -76,7 +76,7 @@ const ViewSpecificClient = () => {
           title: name,
         },
         bitcoin: 9999,
-        accountType: CLIENT_INFO.accountType,
+        accountType: client.accountType,
       })
     );
 
