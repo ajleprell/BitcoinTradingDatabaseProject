@@ -10,9 +10,12 @@ import { useDispatch, useSelector } from "react-redux";
 import Dropdown from "../_components/dropdown";
 import { updateAccountType } from "../_slices/account-slice";
 import { updateTradingUser } from "../_slices/currently-trading-user-slice";
-import {createBTCClient, loginClient, getAllTraders} from "../utils/supabase/dbcalls";
+import {
+  createBTCClient,
+  loginClient,
+  getAllTraders,
+} from "../utils/supabase/dbcalls";
 import { ToastContainer, toast } from "react-toastify";
-
 
 export default function Home() {
   const [clientInfo, clientInfoDispatch] = useReducer(
@@ -30,7 +33,11 @@ export default function Home() {
   useEffect(() => {
     const fetchTraders = async () => {
       let fetchedTraders = await getAllTraders();
-      fetchedTraders= fetchedTraders.map(t => ({ key: t.trader_id, id: t.trader_id, title: `${t.first_name} ${t.last_name}` }))
+      fetchedTraders = fetchedTraders.map((t) => ({
+        key: t.trader_id,
+        id: t.trader_id,
+        title: `${t.first_name} ${t.last_name}`,
+      }));
       setTraders(fetchedTraders); // Format the fetched traders
     };
 
@@ -105,8 +112,9 @@ export default function Home() {
 
 
     let client_id;
-    if(accountType === "Client"){
-      client_id = await createBTCClient(clientInfo.firstName,
+    if (accountType === "Client") {
+      client_id = await createBTCClient(
+        clientInfo.firstName,
         clientInfo.lastName,
         clientInfo.phoneNumber,
         clientInfo.cellPhoneNumber,
@@ -116,9 +124,11 @@ export default function Home() {
         clientInfo.state,
         clientInfo.zipCode,
         clientInfo.password,
-        selectedTrader.id)
-    }else{
-      client_id = await createBTCClient(clientInfo.firstName,
+        selectedTrader.id
+      );
+    } else {
+      client_id = await createBTCClient(
+        clientInfo.firstName,
         clientInfo.lastName,
         clientInfo.phoneNumber,
         clientInfo.cellPhoneNumber,
@@ -128,21 +138,23 @@ export default function Home() {
         clientInfo.state,
         clientInfo.zipCode,
         clientInfo.password,
-        "")
+        ""
+      );
     }
-     
 
-    const obj = {firstName:clientInfo.firstName ,
+    const obj = {
+      firstName: clientInfo.firstName,
       lastName: clientInfo.lastName,
       phoneNumber: clientInfo.phoneNumber,
-      cellPhoneNumber:clientInfo.cellPhoneNumber ,
+      cellPhoneNumber: clientInfo.cellPhoneNumber,
       email: clientInfo.email,
       streetAddress: clientInfo.streetAddress,
       city: clientInfo.city,
       state: clientInfo.state,
       zipCode: clientInfo.zipCode,
       password: clientInfo.password,
-      id: client_id}
+      id: client_id,
+    };
 
     // console.log("Test!: ", testing)
     dispatch(createUser({ ...obj, traderInfo: selectedTrader }));
@@ -153,6 +165,7 @@ export default function Home() {
           ...obj,
           traderInfo: selectedTrader,
           bitcoin: 9999,
+          usd: 9999,
         })
       ); // User that we are trading with in the trade page
 
@@ -163,11 +176,15 @@ export default function Home() {
   };
 
   const signInUser = async () => {
-    const signedInUser = await loginClient(clientInfo.email, clientInfo.password, accountType)
+    const signedInUser = await loginClient(
+      clientInfo.email,
+      clientInfo.password,
+      accountType
+    );
 
     // console.log("sigiend in user: ", signed)
-    if(signedInUser === false){
-      toast.error("Wrong email or password. Try again")
+    if (signedInUser === false) {
+      toast.error("Wrong email or password. Try again");
     }
     console.log("user? ", signedInUser)
 

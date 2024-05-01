@@ -11,8 +11,7 @@ const ViewTransaction = () => {
   const accountType = useSelector((state) => state.account.accountType);
   const router = useRouter();
 
-  const { date, bitcoinAmount, usdAmount, name, commissionType, traderName } =
-    transaction;
+  const { date, bitcoinAmount, usdAmount, name, traderName } = transaction;
 
   console.log("Transaction:", transaction);
 
@@ -25,20 +24,15 @@ const ViewTransaction = () => {
       <div className="w-full h-full flex-row flex">
         <div className="flex flex-col w-full h-full items-start justify-around">
           <h1 className="text-4xl font-medium">
-            Value of Transaction in Bitcoin:{" "}
+            Transaction Bitcoin Amount:{" "}
             <span className="font-bold">{bitcoinAmount} BTC</span>
           </h1>
           <h1 className="text-4xl font-medium">
-            Commission Type: <span className="font-bold">{commissionType}</span>
+            Transaction USD Amount:{" "}
+            <span className="font-bold">
+              ${addCommas(usdAmount.toString())}
+            </span>
           </h1>
-          {commissionType === "Fiat Currency" && usdAmount && (
-            <h1 className="text-4xl font-medium">
-              Amount in USD:{" "}
-              <span className="font-bold">
-                ${addCommas(usdAmount.toString())}
-              </span>
-            </h1>
-          )}
           <h1 className="text-4xl font-medium">
             Client Name: <span className="font-bold">{name}</span>
           </h1>

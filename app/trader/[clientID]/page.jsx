@@ -6,7 +6,7 @@ import { updateTradingUser } from "@/app/_slices/currently-trading-user-slice";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {getClientInfo} from "../../utils/supabase/dbcalls"
+import { getClientInfo } from "../../utils/supabase/dbcalls";
 // const client = {
 //   name: "John Doe",
 //   accountType: "SILVER",
@@ -16,7 +16,6 @@ import {getClientInfo} from "../../utils/supabase/dbcalls"
 //       date: "4/10/2024",
 //       usdAmount: 100,
 //       type: "Deposit",
-//       commissionType: "Fiat Currency",
 //       bitcoinAmount: 0.0001,
 //       clientName: "Ronald Ralph",
 //       traderName: "John Doe",
@@ -26,7 +25,6 @@ import {getClientInfo} from "../../utils/supabase/dbcalls"
 //       date: "4/1/2024",
 //       usdAmount: 200,
 //       type: "Withdrawal",
-//       commissionType: "Bitcoin",
 //       bitcoinAmount: 0.0002,
 //       clientName: "Ronald Ralph",
 //       traderName: "Jane Doe",
@@ -36,7 +34,6 @@ import {getClientInfo} from "../../utils/supabase/dbcalls"
 //       date: "3/1/2024",
 //       usdAmount: 300,
 //       type: "Deposit",
-//       commissionType: "Fiat Currency",
 //       bitcoinAmount: 0.0003,
 //       clientName: "Ronald Ralph",
 //       traderName: "Steve Smith",
@@ -54,14 +51,13 @@ const ViewSpecificClient = () => {
   useEffect(() => {
     const fetchClientInfo = async () => {
       // Fetch Client Info Here
-      const client_info = await getClientInfo(clientID)
-      
+      const client_info = await getClientInfo(clientID);
+
       setClient(client_info);
     };
 
     fetchClientInfo();
   });
-
 
   if (!client) return <div>Loading...</div>;
 
@@ -76,6 +72,7 @@ const ViewSpecificClient = () => {
           title: name,
         },
         bitcoin: 9999,
+        usd: 9999,
         accountType: client.accountType,
       })
     );
