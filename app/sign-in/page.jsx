@@ -37,6 +37,73 @@ export default function Home() {
     fetchTraders();
   }, []);
   const signUpUser = async () => {
+
+    // Helper function to check if a value is a non-empty string
+    const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
+
+    // Helper function to sanitize strings by trimming whitespace
+    const sanitizeString = (value) => typeof value === 'string' ? value.trim() : value;
+
+    // Sanitize all fields
+    clientInfo.lastName = sanitizeString(clientInfo.lastName);
+    clientInfo.phoneNumber = sanitizeString(clientInfo.phoneNumber);
+    clientInfo.cellPhoneNumber = sanitizeString(clientInfo.cellPhoneNumber);
+    clientInfo.email = sanitizeString(clientInfo.email);
+    clientInfo.streetAddress = sanitizeString(clientInfo.streetAddress);
+    clientInfo.city = sanitizeString(clientInfo.city);
+    clientInfo.state = sanitizeString(clientInfo.state);
+    clientInfo.zipCode = sanitizeString(clientInfo.zipCode);
+    clientInfo.password = sanitizeString(clientInfo.password);
+
+    // Check if all fields are filled in and are valid strings
+    if (!isNonEmptyString(clientInfo.lastName)) {
+        toast.error("Error: Last name is missing or invalid.");
+        // Replace this with a toast notification or other UI action
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.phoneNumber)) {
+        toast.error("Error: Phone number is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.cellPhoneNumber)) {
+        toast.error("Error: Cell phone number is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.email)) {
+        toast.error("Error: Email is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.streetAddress)) {
+        toast.error("Error: Street address is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.city)) {
+        toast.error("Error: City is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.state)) {
+        toast.error("Error: State is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.zipCode)) {
+        toast.error("Error: Zip code is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.password)) {
+        toast.error("Error: Password is missing or invalid.");
+        return false;
+    }
+
+
+
     let client_id;
     if(accountType === "Client"){
       client_id = await createBTCClient(clientInfo.firstName,
@@ -100,17 +167,34 @@ export default function Home() {
 
     // console.log("sigiend in user: ", signed)
     if(signedInUser === false){
-      toast.error("Unauthorized")
+      toast.error("Wrong email or password. Try again")
     }
     console.log("user? ", signedInUser)
 
-    dispatch(createUser(signedInUser)); // User that is signed in
+    
 
     if (accountType === "Client") {
       dispatch(updateTradingUser(signedInUser)); // User that we are trading with in the trade page
 
       router.push("/trade");
-    } else {
+    } else if (accountType==="Manager") {
+      const signedInUser = {
+        id: data.client_id,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        phoneNumber: data.phone_number,
+        cellPhoneNumber: data.cell_phone_number,
+        email: data.email,
+        streetAddress: data.street_address,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zip_code,
+        bitcoin: clientAccount.bitcoin_balance,
+        traderInfo: traderInfo,
+      };
+      router.push("/manager")
+    }else{
+      dispatch(createUser(signedInUser)); // User that is signed in
       router.push("/trader");
     }
   };
@@ -131,6 +215,7 @@ export default function Home() {
             }
           />
           <Input
+            type="password"
             title="Password"
             value={clientInfo.password}
             setValue={(password) =>

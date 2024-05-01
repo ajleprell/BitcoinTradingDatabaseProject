@@ -278,3 +278,151 @@ export async function createTransaction({
 
   console.log("Transaction created successfully:", data);
 }
+
+export async function deposit(
+  client_id,
+  password,
+  amount,
+  deposit_type,
+  trader_id
+) {
+  const supabase = createServerClient();
+
+  // Step 1: Verify the client's identity
+  const { data: clients, error: clientError } = await supabase
+    .from("Clients")
+    .select("password")
+    .eq("client_id", client_id)
+    .single();
+
+  if (clientError || !clients) {
+    console.error("Client verification failed: ", clientError);
+    throw new Error("Invalid client ID or password");
+  }
+
+  if (clients.password !== password) {
+    console.error("Password mismatch");
+    throw new Error("Invalid client ID or password");
+  }
+
+  // Step 2: Retrieve client's account
+  const { data: accounts, error: accountError } = await supabase
+    .from("Accounts")
+    .select("*")
+    .eq("client_id", client_id)
+    .single();
+
+  if (accountError || !accounts) {
+    console.error("Account retrieval failed: ", accountError);
+    throw new Error("Account not found for client");
+  }
+
+  // Step 3: Update the appropriate balance based on deposit type
+  let balanceUpdate = {};
+
+  if (deposit_type === "Bitcoin") {
+    balanceUpdate = { bitcoin_balance: accounts.bitcoin_balance + amount };
+  } else if (deposit_type === "Fiat") {
+    balanceUpdate = { fiat_balance: accounts.fiat_balance + amount };
+  } else {
+    throw new Error("Invalid deposit type");
+  }
+
+  const { error: balanceError } = await supabase
+    .from("Accounts")
+    .update(balanceUpdate)
+    .eq("account_id", accounts.account_id);
+
+  if (balanceError) {
+    console.error("Balance update failed: ", balanceError);
+    throw new Error("Failed to update account balance");
+  }
+
+  // Step 4: Log the transaction in the Payments table
+  const { error: paymentError } = await supabase.from("Payments").insert([
+    {
+      client_id: client_id,
+      amount: amount,
+      payment_date: new Date(),
+      trader_id: trader_id,
+    },
+  ]);
+
+  if (paymentError) {
+    console.error("Payment logging failed: ", paymentError);
+    throw new Error("Failed to log payment transaction");
+  }
+
+  console.log("Deposit successful");
+  return true;
+}
+
+
+function validateForm(clientInfo) {
+    // Helper function to check if a value is a non-empty string
+    const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
+
+    // Helper function to sanitize strings by trimming whitespace
+    const sanitizeString = (value) => typeof value === 'string' ? value.trim() : value;
+
+    // Sanitize all fields
+    clientInfo.lastName = sanitizeString(clientInfo.lastName);
+    clientInfo.phoneNumber = sanitizeString(clientInfo.phoneNumber);
+    clientInfo.cellPhoneNumber = sanitizeString(clientInfo.cellPhoneNumber);
+    clientInfo.email = sanitizeString(clientInfo.email);
+    clientInfo.streetAddress = sanitizeString(clientInfo.streetAddress);
+    clientInfo.city = sanitizeString(clientInfo.city);
+    clientInfo.state = sanitizeString(clientInfo.state);
+    clientInfo.zipCode = sanitizeString(clientInfo.zipCode);
+    clientInfo.password = sanitizeString(clientInfo.password);
+
+    // Check if all fields are filled in and are valid strings
+    if (!isNonEmptyString(clientInfo.lastName)) {
+        console.log("Error: Last name is missing or invalid.");
+        // Replace this with a toast notification or other UI action
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.phoneNumber)) {
+        console.log("Error: Phone number is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.cellPhoneNumber)) {
+        console.log("Error: Cell phone number is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.email)) {
+        console.log("Error: Email is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.streetAddress)) {
+        console.log("Error: Street address is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.city)) {
+        console.log("Error: City is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.state)) {
+        console.log("Error: State is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.zipCode)) {
+        console.log("Error: Zip code is missing or invalid.");
+        return false;
+    }
+
+    if (!isNonEmptyString(clientInfo.password)) {
+        console.log("Error: Password is missing or invalid.");
+        return false;
+    }
+
+    console.log("Form is valid.");
+    return true;
+}
