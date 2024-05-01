@@ -7,7 +7,6 @@ export const viewTransactionSlice = createSlice({
     bitcoinAmount: "",
     usdAmount: "",
     name: "",
-    commissionType: "",
     traderName: "",
   },
   reducers: {
@@ -16,7 +15,6 @@ export const viewTransactionSlice = createSlice({
       state.bitcoinAmount = action.payload.bitcoinAmount;
       state.usdAmount = action.payload.usdAmount;
       state.name = action.payload.name;
-      state.commissionType = action.payload.commissionType;
       state.traderName = action.payload.traderName;
     },
   },

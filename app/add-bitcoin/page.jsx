@@ -10,48 +10,25 @@ import { ToastContainer, toast } from "react-toastify";
 import { setTransaction } from "../_slices/view-transaction-slice";
 import CurrencyInput from "react-currency-input-field";
 import Dropdown from "../_components/dropdown";
-import { updateBalance } from "../_slices/user-slice";
 import { updateTradingUser } from "../_slices/currently-trading-user-slice";
+import { convertFromBitcoin } from "../_functions/bitcoin-conversions";
 
 const PASSWORD = "Test Password";
 
 const AddBitcoin = () => {
   const router = useRouter();
   const tradingUser = useSelector((state) => state.currentlyTradingUser);
-  const selectedUser = useSelector((state) => state.selectedUser);
   const accountType = useSelector((state) => state.account.accountType);
 
   console.log("Tradign User:", tradingUser);
 
   const [tradeAmount, setTradeAmount] = useState("");
-  const [transactionFee, setTransactionFee] = useState(null);
-  const [bitcoinAmount, setBitcoinAmount] = useState("");
+  const [tradeCurrency, setTradeCurrency] = useState({
+    id: 1,
+    title: "Fiat Currency",
+  });
   const [password, setPassword] = useState("");
-  const { firstName, lastName, traderInfo } = useSelector(
-    (state) => state.user
-  );
   const dispatch = useDispatch();
-
-  console.log(useSelector((state) => state.transaction.bitcoinAmount));
-
-  useEffect(() => {
-    const fetchUpdateTradeAmount = async () => {
-      const response = await fetch(
-        "https://api.coindesk.com/v1/bpi/currentprice/BTC.json"
-      );
-      const data = await response.json();
-
-      const bitcoinPrice = data.bpi.USD.rate_float;
-
-      if (transactionFee && transactionFee.title === "Fiat Currency") {
-        setBitcoinAmount((tradeAmount / bitcoinPrice).toFixed(8));
-      } else {
-        setBitcoinAmount(tradeAmount);
-      }
-    };
-
-    fetchUpdateTradeAmount();
-  }, [tradeAmount, transactionFee]);
 
   const onConfirm = () => {
     if (password === "") {
@@ -65,16 +42,20 @@ const AddBitcoin = () => {
     // Add Transaction To Cloud
     // Add Bitcoin To Cloud Here
 
-    console.log("Trading Bitcoin Amount:", bitcoinAmount);
-    console.log("Trading User Bitcoin Amount:", tradingUser.bitcoin);
-
     if (accountType === "Client") {
-      dispatch(
-        updateTradingUser({
-          ...tradingUser,
-          bitcoin: parseFloat(tradingUser.bitcoin) + parseFloat(bitcoinAmount),
-        })
-      );
+      const newTradingUser = {
+        ...tradingUser,
+        bitcoin:
+          tradeCurrency.title !== "Bitcoin"
+            ? parseFloat(tradingUser.bitcoin) + parseFloat(tradeAmount)
+            : parseFloat(tradingUser.bitcoin),
+        usd:
+          tradeCurrency.title === "Fiat Currency"
+            ? parseFloat(tradingUser.usd) + parseFloat(tradeAmount.usd)
+            : parseFloat(tradingUser.usd),
+      };
+
+      dispatch(updateTradingUser(newTradingUser));
 
       router.push("/trade");
     } else {
@@ -93,7 +74,7 @@ const AddBitcoin = () => {
           <div className="flex flex-col gap-y-[21px]">
             <div className="font-bold text-[40px]">Trade Amount</div>
             <CurrencyInput
-              placeholder="Commision Amount"
+              placeholder="Trade Amount"
               defaultValue={0}
               decimalsLimit={2}
               value={tradeAmount}
@@ -108,18 +89,17 @@ const AddBitcoin = () => {
                 { id: 1, title: "Fiat Currency" },
                 { id: 2, title: "Bitcoin" },
               ]}
-              selectedValue={transactionFee}
-              setSelectedValue={setTransactionFee}
+              selectedValue={tradeCurrency}
+              setSelectedValue={setTradeCurrency}
             />
           </div>
-          {transactionFee && transactionFee.title === "Fiat Currency" && (
-            <h1 className="text-4xl font-medium">
-              Amount in Bitcoin:{" "}
-              <span className="font-bold">
-                {addCommas(bitcoinAmount.toString())} BTC
-              </span>
-            </h1>
-          )}
+          <h1 className="text-4xl font-medium">
+            Adding the following{" "}
+            {tradeCurrency.title === "Fiat Currency" ? "USD" : "BTC"}:{" "}
+            <span className="font-bold">
+              {addCommas(tradeAmount ? tradeAmount.toString() : "")}
+            </span>
+          </h1>
           <h1 className="text-4xl font-medium">
             Password:
             <Input

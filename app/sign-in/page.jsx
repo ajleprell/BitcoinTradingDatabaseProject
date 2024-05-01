@@ -98,6 +98,7 @@ export default function Home() {
           ...obj,
           traderInfo: selectedTrader,
           bitcoin: 9999,
+          usd: 9999,
         })
       ); // User that we are trading with in the trade page
 

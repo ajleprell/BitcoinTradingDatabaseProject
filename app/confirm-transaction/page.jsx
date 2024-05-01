@@ -13,9 +13,10 @@ const PASSWORD = "Test Password";
 
 const ConfirmTransaction = () => {
   const router = useRouter();
-  const { bitcoinAmount, usdAmount, feeType } = useSelector(
+  const { bitcoinAmount, usdAmount } = useSelector(
     (state) => state.transaction
   );
+
   const { firstName, lastName, traderInfo } = useSelector(
     (state) => state.currentlyTradingUser
   );
@@ -40,7 +41,6 @@ const ConfirmTransaction = () => {
         name: firstName + " " + lastName,
         bitcoinAmount,
         usdAmount,
-        commissionType: feeType,
         traderName: traderInfo.title,
         date: new Date().toLocaleDateString(),
       })
@@ -62,16 +62,11 @@ const ConfirmTransaction = () => {
             <span className="font-bold">{bitcoinAmount} BTC</span>
           </h1>
           <h1 className="text-4xl font-medium">
-            Trade Currency: <span className="font-bold">{feeType}</span>
+            Amount in USD:{" "}
+            <span className="font-bold">
+              ${addCommas(usdAmount.toString())}
+            </span>
           </h1>
-          {feeType === "Fiat Currency" && (
-            <h1 className="text-4xl font-medium">
-              Amount in USD:{" "}
-              <span className="font-bold">
-                ${addCommas(usdAmount.toString())}
-              </span>
-            </h1>
-          )}
           <h1 className="text-4xl font-medium">
             Password:
             <Input

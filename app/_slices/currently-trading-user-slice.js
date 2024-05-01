@@ -19,6 +19,7 @@ export const currentlyTradingUserSlice = createSlice({
       title: "",
     },
     bitcoin: 9999,
+    usd: 9999,
   },
   reducers: {
     updateTradingUser: (state, action) => {
@@ -34,6 +35,7 @@ export const currentlyTradingUserSlice = createSlice({
       state.zipCode = action.payload.zipCode;
       state.traderInfo = action.payload.traderInfo;
       state.bitcoin = action.payload.bitcoin;
+      state.usd = action.payload.usd;
     },
   },
 });

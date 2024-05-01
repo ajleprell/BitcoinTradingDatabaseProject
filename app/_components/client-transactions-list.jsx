@@ -52,7 +52,6 @@ const ClientTransactionsList = ({ transactions }) => {
         date: selectedTransaction.date,
         bitcoinAmount: selectedTransaction.bitcoinAmount,
         usdAmount: selectedTransaction.usdAmount,
-        commissionType: selectedTransaction.commissionType,
         traderName: selectedTransaction.traderName,
         name: selectedTransaction.clientName,
       })
@@ -72,7 +71,12 @@ const ClientTransactionsList = ({ transactions }) => {
             onClick={() => viewTransaction(transaction)}
           >
             <div className="font-bold text-2xl">{transaction.date}</div>
-            <div className="font-medium text-xl">{transaction.amount} BTC</div>
+            <div className="font-medium text-xl">
+              {transaction.bitcoinAmount} BTC
+            </div>
+            <div className="font-medium text-xl">
+              {transaction.usdAmount} USD
+            </div>
           </Button>
         ))}
       </div>

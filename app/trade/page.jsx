@@ -12,6 +12,10 @@ import { updateBitcoinAmount } from "../_slices/transaction-slice";
 import addCommas from "../_reusable-functions/add-commas";
 
 import "react-toastify/dist/ReactToastify.css";
+import {
+  convertFromBitcoin,
+  convertToBitcoin,
+} from "../_functions/bitcoin-conversions";
 
 const COMMISSION_BASED_ON_ACCOUNT = {
   SILVER: 0.01,
@@ -21,34 +25,64 @@ const COMMISSION_BASED_ON_ACCOUNT = {
 const Page = () => {
   const userInfo = useSelector((state) => state.currentlyTradingUser);
 
-  const { firstName, lastName, accountType, bitcoin, traderInfo } = userInfo;
+  const { firstName, lastName, accountType, bitcoin, usd, traderInfo } =
+    userInfo;
   const [tradeAmount, setTradeAmount] = useState("");
-  const [transactionFee, setTransactionFee] = useState(null);
-  const [totalTradeAmount, setTotalTradeAmount] = useState("0.00");
+  const [tradeCurrency, setTradeCurrency] = useState({
+    id: 1,
+    title: "Fiat Currency",
+  });
+  const [commissionCurrency, setCommissionCurrency] = useState({
+    id: 1,
+    title: "Fiat Currency",
+  });
+  const [calculatedCommissionAmount, setCalculatedCommissionAmount] =
+    useState(0);
   const dispatch = useDispatch();
   const router = useRouter();
 
-  const trade = () => {
-    const parsedTotalTradeAmount = parseFloat(
-      totalTradeAmount.replace(/,/g, "")
-    );
+  console.log("Trade Currency:", tradeCurrency);
+  console.log("Bitcoin Currency:", commissionCurrency);
 
-    if (!transactionFee) {
+  const trade = () => {
+    const parsedTradeAmount = parseFloat(tradeAmount);
+
+    console.log("Trade Amount:", parsedTradeAmount);
+    console.log("Commission Amount:", calculatedCommissionAmount);
+
+    let usdAmount = 0;
+    let bitcoinAmount = 0;
+
+    if (tradeCurrency.title === "Fiat Currency") {
+      usdAmount += parsedTradeAmount;
+    } else {
+      bitcoinAmount += parsedTradeAmount;
+    }
+
+    if (commissionCurrency.title === "Fiat Currency") {
+      usdAmount += calculatedCommissionAmount;
+    } else {
+      bitcoinAmount += calculatedCommissionAmount;
+    }
+
+    if (!tradeCurrency) {
       toast.error("Please select a commission type");
       return;
-    } else if (tradeAmount === "") {
+    } else if (parsedTradeAmount === "") {
       toast.error("Please enter bitcoin amount");
       return;
-    } else if (bitcoin < parsedTotalTradeAmount) {
+    } else if (bitcoin < bitcoinAmount) {
       toast.error("Insufficient bitcoin");
+      return;
+    } else if (usd < usdAmount) {
+      toast.error("Insufficient USD");
       return;
     }
 
     dispatch(
       updateBitcoinAmount({
-        usdAmount: tradeAmount,
-        feeType: transactionFee.title,
-        bitcoinAmount: parsedTotalTradeAmount,
+        usdAmount,
+        bitcoinAmount,
       })
     );
 
@@ -60,23 +94,44 @@ const Page = () => {
       const response = await fetch(
         "https://api.coindesk.com/v1/bpi/currentprice/BTC.json"
       );
-      const multiplier = (await response.json()).bpi.USD.rate_float;
+      // const multiplier = (await response.json()).bpi.USD.rate_float;
 
-      const tradeAmountWithCommission =
-        tradeAmount + COMMISSION_BASED_ON_ACCOUNT[accountType] * tradeAmount;
+      // if (tradeCurrency && tradeCurrency === "Fiat Currency") {
+      //  const
+      // }
 
-      const convertedTradeAmount =
-        transactionFee && transactionFee.title === "Fiat Currency"
+      //  console.log("Trade Amoiunt:", tradeAmount);
+
+      /*  const convertedTradeAmount =
+        tradeCurrency && tradeCurrency.title === "Fiat Currency"
           ? (tradeAmountWithCommission / multiplier).toFixed(8)
           : tradeAmountWithCommission.toString();
+*/
 
-      setTotalTradeAmount(
-        convertedTradeAmount ? addCommas(convertedTradeAmount) : "0.00"
-      );
+      const baseCommissionAmount =
+        COMMISSION_BASED_ON_ACCOUNT[accountType] * tradeAmount;
+
+      if (
+        tradeCurrency &&
+        commissionCurrency &&
+        tradeCurrency.title !== commissionCurrency.title
+      ) {
+        if (tradeCurrency.title === "Fiat Currency") {
+          setCalculatedCommissionAmount(
+            await convertToBitcoin(baseCommissionAmount)
+          );
+        } else {
+          setCalculatedCommissionAmount(
+            await convertFromBitcoin(baseCommissionAmount)
+          );
+        }
+      } else {
+        setCalculatedCommissionAmount(baseCommissionAmount);
+      }
     };
 
     if (tradeAmount) fetchUpdateTradeAmount();
-  }, [tradeAmount, transactionFee, accountType]);
+  }, [tradeAmount, tradeCurrency, accountType, commissionCurrency]);
 
   return (
     <div className="flex flex-col justify-between items-center w-screen h-screen p-16">
@@ -107,7 +162,10 @@ const Page = () => {
             </span>
           </div>
           <div className={`font-medium text-[30px]`}>
-            Currency In Account: {bitcoin} Bitcoin
+            Bitcoin In Account: {bitcoin} Bitcoin
+          </div>
+          <div className={`font-medium text-[30px]`}>
+            Fiat In Account: {usd} USD
           </div>
           <div className={`font-medium text-[30px]`}>
             Trader: {traderInfo.title}
@@ -125,8 +183,19 @@ const Page = () => {
               { id: 1, title: "Fiat Currency" },
               { id: 2, title: "Bitcoin" },
             ]}
-            selectedValue={transactionFee}
-            setSelectedValue={setTransactionFee}
+            selectedValue={tradeCurrency}
+            setSelectedValue={setTradeCurrency}
+          />
+        </div>
+        <div className="flex flex-col gap-y-[21px]">
+          <div className="font-bold text-[40px]">Commission Currency</div>
+          <Dropdown
+            options={[
+              { id: 1, title: "Fiat Currency" },
+              { id: 2, title: "Bitcoin" },
+            ]}
+            selectedValue={commissionCurrency}
+            setSelectedValue={setCommissionCurrency}
           />
         </div>
         <div className="flex flex-col gap-y-[21px]">
@@ -134,7 +203,13 @@ const Page = () => {
             <span className="font-normal">
               Total Trade Amount (In Bitcoin):
             </span>{" "}
-            {totalTradeAmount}
+            <div className="text-5xl font-bold">
+              {tradeAmount}{" "}
+              {tradeCurrency.title === "Fiat Currency" ? "USD" : "BTC"} +{" "}
+              {calculatedCommissionAmount}{" "}
+              {commissionCurrency.title === "Fiat Currency" ? "USD" : "BTC"}{" "}
+              Commission
+            </div>
             <div className="text-sm font-light">
               Including Commission of {COMMISSION_BASED_ON_ACCOUNT[accountType]}{" "}
               for {accountType === "GOLD" ? "Gold" : "Silver"} Account
