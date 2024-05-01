@@ -33,6 +33,7 @@ export const currentlyTradingUserSlice = createSlice({
       state.state = action.payload.state;
       state.zipCode = action.payload.zipCode;
       state.traderInfo = action.payload.traderInfo;
+      state.bitcoin = action.payload.bitcoin;
     },
   },
 });

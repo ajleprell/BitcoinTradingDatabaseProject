@@ -10,49 +10,9 @@ import { useDispatch, useSelector } from "react-redux";
 import Dropdown from "../_components/dropdown";
 import { updateAccountType } from "../_slices/account-slice";
 import { updateTradingUser } from "../_slices/currently-trading-user-slice";
+import {createBTCClient, loginClient, getAllTraders} from "../utils/supabase/dbcalls";
+import { ToastContainer, toast } from "react-toastify";
 
-const EXISTING_TRADERS = [
-  {
-    id: 1,
-    title: "John Doe",
-  },
-  {
-    id: 2,
-    title: "Jane Doe",
-  },
-  {
-    id: 3,
-    title: "John Smith",
-  },
-  {
-    id: 4,
-    title: "Jane Smith",
-  },
-  {
-    id: 5,
-    title: "John Johnson",
-  },
-  {
-    id: 6,
-    title: "Jane Johnson",
-  },
-  {
-    id: 7,
-    title: "John Brown",
-  },
-  {
-    id: 8,
-    title: "Jane Brown",
-  },
-  {
-    id: 9,
-    title: "John White",
-  },
-  {
-    id: 10,
-    title: "Jane White",
-  },
-];
 
 export default function Home() {
   const [clientInfo, clientInfoDispatch] = useReducer(
@@ -64,15 +24,69 @@ export default function Home() {
   const dispatch = useDispatch();
   const [isSignInState, setIsSignInState] = useState(accountType === "Manager");
   const [selectedTrader, setSelectedTrader] = useState(null); // {id, title}
+  const [traders, setTraders] = useState([]); // Dynamic list of traders
 
+  // Fetch traders from the database
+  useEffect(() => {
+    const fetchTraders = async () => {
+      let fetchedTraders = await getAllTraders();
+      fetchedTraders= fetchedTraders.map(t => ({ key: t.trader_id, id: t.trader_id, title: `${t.first_name} ${t.last_name}` }))
+      setTraders(fetchedTraders); // Format the fetched traders
+    };
+
+    fetchTraders();
+  }, []);
   const signUpUser = async () => {
-    // sign up user here
+    let client_id;
+    if(accountType === "Client"){
+      client_id = await createBTCClient(clientInfo.firstName,
+        clientInfo.lastName,
+        clientInfo.phoneNumber,
+        clientInfo.cellPhoneNumber,
+        clientInfo.email,
+        clientInfo.streetAddress,
+        clientInfo.city,
+        clientInfo.state,
+        clientInfo.zipCode,
+        clientInfo.password,
+        selectedTrader.id)
+    }else{
+      client_id = await createBTCClient(clientInfo.firstName,
+        clientInfo.lastName,
+        clientInfo.phoneNumber,
+        clientInfo.cellPhoneNumber,
+        clientInfo.email,
+        clientInfo.streetAddress,
+        clientInfo.city,
+        clientInfo.state,
+        clientInfo.zipCode,
+        clientInfo.password,
+        "")
+    }
+     
 
-    dispatch(createUser({ ...clientInfo, traderInfo: selectedTrader }));
+    const obj = {firstName:clientInfo.firstName ,
+      lastName: clientInfo.lastName,
+      phoneNumber: clientInfo.phoneNumber,
+      cellPhoneNumber:clientInfo.cellPhoneNumber ,
+      email: clientInfo.email,
+      streetAddress: clientInfo.streetAddress,
+      city: clientInfo.city,
+      state: clientInfo.state,
+      zipCode: clientInfo.zipCode,
+      password: clientInfo.password,
+      id: client_id}
+
+    // console.log("Test!: ", testing)
+    dispatch(createUser({ ...obj, traderInfo: selectedTrader }));
 
     if (accountType === "Client") {
       dispatch(
-        updateTradingUser({ ...clientInfo, traderInfo: selectedTrader })
+        updateTradingUser({
+          ...obj,
+          traderInfo: selectedTrader,
+          bitcoin: 9999,
+        })
       ); // User that we are trading with in the trade page
 
       router.push("/trade");
@@ -82,29 +96,13 @@ export default function Home() {
   };
 
   const signInUser = async () => {
-    const signInUserInfo = {
-      email: clientInfo.email,
-      password: clientInfo.password,
-    };
+    const signedInUser = await loginClient(clientInfo.email, clientInfo.password, accountType)
 
-    // sign in user here
-    // Add Dummy Data
-    const signedInUser = {
-      firstName: "John",
-      lastName: "Doe",
-      phoneNumber: "1234567890",
-      cellPhoneNumber: "1234567890",
-      email: "asd@gmail.com",
-      streetAddress: "123 Main St",
-      city: "New York",
-      state: "NY",
-      zipCode: "10001",
-      bitcoin: 9999,
-      traderInfo: {
-        id: 1,
-        title: "Steve Smith",
-      },
-    };
+    // console.log("sigiend in user: ", signed)
+    if(signedInUser === false){
+      toast.error("Unauthorized")
+    }
+    console.log("user? ", signedInUser)
 
     dispatch(createUser(signedInUser)); // User that is signed in
 
@@ -273,7 +271,7 @@ export default function Home() {
           <div className="flex flex-col gap-y-2">
             <div className="font-bold text-xl">Select Trader</div>
             <Dropdown
-              options={EXISTING_TRADERS}
+              options={traders}
               selectedValue={selectedTrader}
               setSelectedValue={setSelectedTrader}
             />
@@ -294,6 +292,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <ToastContainer position="bottom-center" />
     </div>
   );
 }

@@ -72,11 +72,13 @@ const AddBitcoin = () => {
     // Add Transaction To Cloud
     // Add Bitcoin To Cloud Here
 
+    console.log("Trading Bitcoin Amount:", bitcoinAmount);
+    console.log("Trading User Bitcoin Amount:", tradingUser.bitcoin);
     if (accountType === "Client") {
       dispatch(
         updateTradingUser({
           ...tradingUser,
-          bitcoin: tradingUser.bitcoin + bitcoinAmount,
+          bitcoin: parseFloat(tradingUser.bitcoin) + parseFloat(bitcoinAmount),
         })
       );
 

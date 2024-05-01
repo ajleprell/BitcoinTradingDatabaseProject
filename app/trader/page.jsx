@@ -1,55 +1,51 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "../_components/button";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import Input from "../_components/input";
+import {getAllClients} from "../utils/supabase/dbcalls";
 
-const CLIENTS = [
-  {
-    id: 1,
-    name: "John Doe",
-    city: "New York",
-    zipCode: "10001",
-  },
-  {
-    id: 2,
-    name: "Jane Roe",
-    city: "Los Angeles",
-    zipCode: "90001",
-  },
-  {
-    id: 3,
-    name: "Steve Smith",
-    city: "Chicago",
-    zipCode: "60007",
-  },
-];
 
 const Trader = () => {
   const { firstName, lastName } = useSelector((state) => state.user);
+
   const accountType = useSelector((state) => state.account.accountType);
   const router = useRouter();
   const [nameSearch, setNameSearch] = useState("");
   const [citySearch, setCitySearch] = useState("");
   const [zipCodeSearch, setZipCodeSearch] = useState("");
-  const [filteredClients, setFilteredClients] = useState(CLIENTS);
+  const [clients, setClients] = useState([]); // Dynamic list of traders
+  const [filteredClients, setFilteredClients] = useState(clients);
+  const trader = useSelector((state) => state.user)
+  // Fetch traders from the database
+  useEffect(() => {
+    const fetchClients = async () => {
+      let fetchedClients = await getAllClients(trader.id);
+      fetchedClients= fetchedClients.map(t => ({ key: t.client_id, ...t }))
+      
+      setClients(fetchedClients); // Format the fetched traders
+      setFilteredClients(fetchedClients)
+    };
 
+    fetchClients();
+  }, []);
   console.log("First Name:", firstName);
   console.log("last Name:", lastName);
 
   const search = () => {
-    const filtered = CLIENTS.filter(
+    const filtered = clients.filter(
       (client) =>
         (nameSearch
-          ? client.name.toLowerCase().includes(nameSearch.toLowerCase())
+          ? client.first_name.toLowerCase().includes(nameSearch.toLowerCase())
           : true) &&
         (citySearch
           ? client.city.toLowerCase().includes(citySearch.toLowerCase())
           : true) &&
         (zipCodeSearch ? client.zipCode.startsWith(zipCodeSearch) : true)
     );
+    console.log("filtered; ", filtered)
     setFilteredClients(filtered);
   };
 
@@ -57,7 +53,7 @@ const Trader = () => {
     setNameSearch("");
     setCitySearch("");
     setZipCodeSearch("");
-    setFilteredClients(CLIENTS);
+    setFilteredClients(clients);
   };
 
   return (
@@ -68,11 +64,11 @@ const Trader = () => {
         </div>
         {filteredClients.map((client) => (
           <Button
-            key={client.id}
+            key={client.key}
             className="w-full"
-            onClick={() => router.push("/trader/" + client.id)}
+            onClick={() => router.push("/trader/" + client.client_id)}
           >
-            {client.name}
+            {client.first_name + " " + client.last_name}
           </Button>
         ))}
       </div>
@@ -85,7 +81,7 @@ const Trader = () => {
             Account Type: {accountType}
           </div>
           <div className={`font-medium text-[30px]`}>
-            Clients: {CLIENTS.length}
+            Clients: {clients.length}
           </div>
         </div>
         <div className="flex flex-col gap-y-4">
