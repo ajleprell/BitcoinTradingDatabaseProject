@@ -13,41 +13,40 @@ import addCommas from "../_reusable-functions/add-commas";
 
 import "react-toastify/dist/ReactToastify.css";
 
+const COMMISSION_BASED_ON_ACCOUNT = {
+  SILVER: 0.01,
+  GOLD: 0.005,
+};
+
 const Page = () => {
   const userInfo = useSelector((state) => state.currentlyTradingUser);
 
-  console.log("User Info:", userInfo);
-
   const { firstName, lastName, accountType, bitcoin, traderInfo } = userInfo;
-  const [commissionAmount, setCommissionAmount] = useState("");
+  const [tradeAmount, setTradeAmount] = useState("");
   const [transactionFee, setTransactionFee] = useState(null);
   const [totalTradeAmount, setTotalTradeAmount] = useState("0.00");
   const dispatch = useDispatch();
   const router = useRouter();
 
-  const tradeAmount = () => {
+  const trade = () => {
     const parsedTotalTradeAmount = parseFloat(
       totalTradeAmount.replace(/,/g, "")
     );
 
-    console.log("Bitcoin:", bitcoin);
-
     if (!transactionFee) {
       toast.error("Please select a commission type");
       return;
-    } else if (commissionAmount === "") {
+    } else if (tradeAmount === "") {
       toast.error("Please enter bitcoin amount");
       return;
-    } else if (bitcoin < totalTradeAmount) {
+    } else if (bitcoin < parsedTotalTradeAmount) {
       toast.error("Insufficient bitcoin");
       return;
     }
 
-    console.log("Totla Trade Amount:", parsedTotalTradeAmount);
-
     dispatch(
       updateBitcoinAmount({
-        usdAmount: commissionAmount,
+        usdAmount: tradeAmount,
         feeType: transactionFee.title,
         bitcoinAmount: parsedTotalTradeAmount,
       })
@@ -63,31 +62,33 @@ const Page = () => {
       );
       const multiplier = (await response.json()).bpi.USD.rate_float;
 
-      const tradeAmount =
+      const tradeAmountWithCommission =
+        tradeAmount + COMMISSION_BASED_ON_ACCOUNT[accountType] * tradeAmount;
+
+      const convertedTradeAmount =
         transactionFee && transactionFee.title === "Fiat Currency"
-          ? (commissionAmount / multiplier).toFixed(8)
-          : commissionAmount.toString();
+          ? (tradeAmountWithCommission / multiplier).toFixed(8)
+          : tradeAmountWithCommission.toString();
 
-      console.log("Commision Amount:", commissionAmount);
-      console.log("Trade Amount:", tradeAmount);
-
-      setTotalTradeAmount(commissionAmount ? addCommas(tradeAmount) : "0.00");
+      setTotalTradeAmount(
+        convertedTradeAmount ? addCommas(convertedTradeAmount) : "0.00"
+      );
     };
 
-    fetchUpdateTradeAmount();
-  }, [commissionAmount, transactionFee]);
+    if (tradeAmount) fetchUpdateTradeAmount();
+  }, [tradeAmount, transactionFee, accountType]);
 
   return (
     <div className="flex flex-col justify-between items-center w-screen h-screen p-16">
       <div className="flex flex-row justify-between items-center w-full">
         <div className="flex flex-col gap-y-[21px]">
-          <div className="font-bold text-[40px]">Commission Amount</div>
+          <div className="font-bold text-[40px]">Trade Amount</div>
           <CurrencyInput
-            placeholder="Commision Amount"
+            placeholder="Trade Amount"
             defaultValue={0}
             decimalsLimit={2}
-            value={commissionAmount}
-            onValueChange={(value, name, values) => setCommissionAmount(value)}
+            value={tradeAmount}
+            onValueChange={(value, name, values) => setTradeAmount(value)}
             className="bg-[#F1F1F1] rounded-[14px] p-4 outline-none w-[450px]"
           />
         </div>
@@ -118,7 +119,7 @@ const Page = () => {
       </div>
       <div className="flex flex-row justify-between items-center w-full">
         <div className="flex flex-col gap-y-[21px]">
-          <div className="font-bold text-[40px]">Commission Type</div>
+          <div className="font-bold text-[40px]">Trade Currency</div>
           <Dropdown
             options={[
               { id: 1, title: "Fiat Currency" },
@@ -134,8 +135,12 @@ const Page = () => {
               Total Trade Amount (In Bitcoin):
             </span>{" "}
             {totalTradeAmount}
+            <div className="text-sm font-light">
+              Including Commission of {COMMISSION_BASED_ON_ACCOUNT[accountType]}{" "}
+              for {accountType === "GOLD" ? "Gold" : "Silver"} Account
+            </div>
           </div>
-          <Button className="w-full" onClick={() => tradeAmount()}>
+          <Button className="w-full" onClick={() => trade()}>
             Trade
           </Button>
           <div>

@@ -62,7 +62,7 @@ const ConfirmTransaction = () => {
             <span className="font-bold">{bitcoinAmount} BTC</span>
           </h1>
           <h1 className="text-4xl font-medium">
-            Commission Type: <span className="font-bold">{feeType}</span>
+            Trade Currency: <span className="font-bold">{feeType}</span>
           </h1>
           {feeType === "Fiat Currency" && (
             <h1 className="text-4xl font-medium">

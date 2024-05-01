@@ -23,7 +23,7 @@ const AddBitcoin = () => {
 
   console.log("Tradign User:", tradingUser);
 
-  const [commissionAmount, setCommissionAmount] = useState("");
+  const [tradeAmount, setTradeAmount] = useState("");
   const [transactionFee, setTransactionFee] = useState(null);
   const [bitcoinAmount, setBitcoinAmount] = useState("");
   const [password, setPassword] = useState("");
@@ -41,24 +41,17 @@ const AddBitcoin = () => {
       );
       const data = await response.json();
 
-      console.log("Data:", data);
-
       const bitcoinPrice = data.bpi.USD.rate_float;
 
-      console.log("Commission Amount:", commissionAmount);
-      console.log("commission Type:", transactionFee?.title);
-
       if (transactionFee && transactionFee.title === "Fiat Currency") {
-        setBitcoinAmount((commissionAmount / bitcoinPrice).toFixed(8));
+        setBitcoinAmount((tradeAmount / bitcoinPrice).toFixed(8));
       } else {
-        setBitcoinAmount(commissionAmount);
+        setBitcoinAmount(tradeAmount);
       }
-
-      console.log("Bitcoin Price:", bitcoinPrice);
     };
 
     fetchUpdateTradeAmount();
-  }, [commissionAmount, transactionFee]);
+  }, [tradeAmount, transactionFee]);
 
   const onConfirm = () => {
     if (password === "") {
@@ -98,20 +91,18 @@ const AddBitcoin = () => {
       <div className="w-full h-full flex-row flex">
         <div className="flex flex-col w-full h-full items-start justify-around">
           <div className="flex flex-col gap-y-[21px]">
-            <div className="font-bold text-[40px]">Commission Amount</div>
+            <div className="font-bold text-[40px]">Trade Amount</div>
             <CurrencyInput
               placeholder="Commision Amount"
               defaultValue={0}
               decimalsLimit={2}
-              value={commissionAmount}
-              onValueChange={(value, name, values) =>
-                setCommissionAmount(value)
-              }
+              value={tradeAmount}
+              onValueChange={(value, name, values) => setTradeAmount(value)}
               className="bg-[#F1F1F1] rounded-[14px] p-4 outline-none w-[450px]"
             />
           </div>
           <div className="flex flex-col gap-y-[21px]">
-            <div className="font-bold text-[40px]">Commission Type</div>
+            <div className="font-bold text-[40px]">Trade Currency</div>
             <Dropdown
               options={[
                 { id: 1, title: "Fiat Currency" },

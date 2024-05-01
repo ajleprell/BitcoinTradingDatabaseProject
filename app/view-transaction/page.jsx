@@ -29,7 +29,8 @@ const ViewTransaction = () => {
             <span className="font-bold">{bitcoinAmount} BTC</span>
           </h1>
           <h1 className="text-4xl font-medium">
-            Commission Type: <span className="font-bold">{commissionType}</span>
+            Transaction Currency:{" "}
+            <span className="font-bold">{commissionType}</span>
           </h1>
           {commissionType === "Fiat Currency" && usdAmount && (
             <h1 className="text-4xl font-medium">
