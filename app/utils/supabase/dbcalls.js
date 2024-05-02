@@ -41,6 +41,7 @@ export async function loginClient(email, inputPassword, accountType) {
       zipCode: data.zip_code,
       bitcoin: clientAccount.bitcoin_balance,
       traderInfo: traderInfo,
+      usd: clientAccount.fiat_balance,
     };
 
     return signedInUser;
@@ -204,7 +205,6 @@ export async function getClientInfo(client_id) {
       transaction_id,
       date,
       fiat_amount,
-      transaction_type,
       commission,
       commission_type,
       bitcoin_amount,
@@ -225,7 +225,6 @@ export async function getClientInfo(client_id) {
     id: trans.transaction_id,
     date: new Date(trans.date).toLocaleDateString(),
     usdAmount: trans.fiat_amount,
-    type: trans.transaction_type === "Buy" ? "Deposit" : "Withdrawal",
     commissionType:
       trans.commission_type === "Bitcoin" ? "Bitcoin" : "Fiat Currency",
     bitcoinAmount: trans.bitcoin_amount,
@@ -243,42 +242,6 @@ export async function getClientInfo(client_id) {
   // console.log(CLIENT_INFO);
 }
 
-export async function createTransaction({
-  client_id,
-  trader_id,
-  transaction_type,
-  fiat_amount,
-  bitcoin_amount,
-  commission,
-  commission_type,
-}) {
-  // Check if the required inputs are valid.
-  if (!client_id || !trader_id || !transaction_type || !commission_type) {
-    console.error("Missing required inputs.");
-    return;
-  }
-
-  // Insert the new transaction.
-  const { data, error } = await supabase.from("Transactions").insert([
-    {
-      client_id: client_id,
-      trader_id: trader_id,
-      transaction_type: transaction_type,
-      fiat_amount: fiat_amount || 0, // Default to 0 if not provided.
-      bitcoin_amount: bitcoin_amount || 0, // Default to 0 if not provided.
-      commission: commission || 0, // Default to 0 if not provided.
-      commission_type: commission_type,
-    },
-  ]);
-
-  if (error) {
-    console.error("Error inserting transaction:", error);
-    return;
-  }
-
-  console.log("Transaction created successfully:", data);
-}
-
 export async function deposit(
   client_id,
   password,
@@ -294,14 +257,13 @@ export async function deposit(
     .select("password")
     .eq("client_id", client_id)
     .single();
-
+  console.log("here!: ", clients);
   if (clientError || !clients) {
     console.error("Client verification failed: ", clientError);
     throw new Error("Invalid client ID or password");
   }
 
   if (clients.password !== password) {
-    console.error("Password mismatch");
     throw new Error("Invalid client ID or password");
   }
 
@@ -357,72 +319,73 @@ export async function deposit(
   return true;
 }
 
+export async function getClientBalance(client_id) {
+  const supabase = createServerClient();
+  const { data: balance, error } = await supabase
+    .from("Accounts")
+    .select("fiat_balance, bitcoin_balance")
+    .eq("client_id", client_id);
 
-function validateForm(clientInfo) {
-    // Helper function to check if a value is a non-empty string
-    const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
+  return balance[0];
+}
 
-    // Helper function to sanitize strings by trimming whitespace
-    const sanitizeString = (value) => typeof value === 'string' ? value.trim() : value;
+export async function createTransaction(
+  clientId,
+  traderId,
+  transactionType,
+  fiatAmount,
+  bitcoinAmount,
+  commission,
+  commissionType
+) {
+  const supabase = createServerClient();
+  // Insert into the Transactions table
+  commissionType = commissionType.includes("Fiat") ? "Fiat" : "Bitcoin";
+  const { data: transactionData, error: transactionError } = await supabase
+    .from("Transactions")
+    .insert([
+      {
+        client_id: clientId,
+        trader_id: traderId,
+        fiat_amount: fiatAmount,
+        bitcoin_amount: bitcoinAmount,
+        commission,
+        commission_type: commissionType,
+        date: new Date(),
+      },
+    ])
+    .select();
 
-    // Sanitize all fields
-    clientInfo.lastName = sanitizeString(clientInfo.lastName);
-    clientInfo.phoneNumber = sanitizeString(clientInfo.phoneNumber);
-    clientInfo.cellPhoneNumber = sanitizeString(clientInfo.cellPhoneNumber);
-    clientInfo.email = sanitizeString(clientInfo.email);
-    clientInfo.streetAddress = sanitizeString(clientInfo.streetAddress);
-    clientInfo.city = sanitizeString(clientInfo.city);
-    clientInfo.state = sanitizeString(clientInfo.state);
-    clientInfo.zipCode = sanitizeString(clientInfo.zipCode);
-    clientInfo.password = sanitizeString(clientInfo.password);
+  if (transactionError) {
+    console.error("Error creating transaction:", transactionError.message);
+    return;
+  }
 
-    // Check if all fields are filled in and are valid strings
-    if (!isNonEmptyString(clientInfo.lastName)) {
-        console.log("Error: Last name is missing or invalid.");
-        // Replace this with a toast notification or other UI action
-        return false;
-    }
+  console.log("Transaction created:", transactionData);
 
-    if (!isNonEmptyString(clientInfo.phoneNumber)) {
-        console.log("Error: Phone number is missing or invalid.");
-        return false;
-    }
+  const accountData = await getClientBalance(clientId);
 
-    if (!isNonEmptyString(clientInfo.cellPhoneNumber)) {
-        console.log("Error: Cell phone number is missing or invalid.");
-        return false;
-    }
+  const updatedFiatBalance = accountData.fiat_balance - fiatAmount;
 
-    if (!isNonEmptyString(clientInfo.email)) {
-        console.log("Error: Email is missing or invalid.");
-        return false;
-    }
+  const updatedBitcoinBalance = accountData.bitcoin_balance - bitcoinAmount;
 
-    if (!isNonEmptyString(clientInfo.streetAddress)) {
-        console.log("Error: Street address is missing or invalid.");
-        return false;
-    }
+  const { data: accId, error } = await supabase
+    .from("Accounts")
+    .select("account_id")
+    .eq("client_id", clientId);
 
-    if (!isNonEmptyString(clientInfo.city)) {
-        console.log("Error: City is missing or invalid.");
-        return false;
-    }
-
-    if (!isNonEmptyString(clientInfo.state)) {
-        console.log("Error: State is missing or invalid.");
-        return false;
-    }
-
-    if (!isNonEmptyString(clientInfo.zipCode)) {
-        console.log("Error: Zip code is missing or invalid.");
-        return false;
-    }
-
-    if (!isNonEmptyString(clientInfo.password)) {
-        console.log("Error: Password is missing or invalid.");
-        return false;
-    }
-
-    console.log("Form is valid.");
-    return true;
+  // Update the account balance
+  const { error: updateError } = await supabase
+    .from("Accounts")
+    .update({
+      fiat_balance: updatedFiatBalance,
+      bitcoin_balance: updatedBitcoinBalance,
+    })
+    .eq("account_id", accId[0].account_id);
+  console.log("accid: ", accId);
+  if (updateError) {
+    console.error("Error updating account:", updateError.message);
+  } else {
+    console.log("Account updated successfully");
+  }
 }

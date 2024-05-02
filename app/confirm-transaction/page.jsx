@@ -8,24 +8,31 @@ import Input from "../_components/input";
 import Button from "../_components/button";
 import { ToastContainer, toast } from "react-toastify";
 import { setTransaction } from "../_slices/view-transaction-slice";
-
-const PASSWORD = "Test Password";
+import { createTransaction } from "../utils/supabase/dbcalls"
+const PASSWORD = "a";
 
 const ConfirmTransaction = () => {
   const router = useRouter();
-  const { bitcoinAmount, usdAmount } = useSelector(
+  const { bitcoinAmount, usdAmount, transactionType, commissionType, commissionAmount } = useSelector(
     (state) => state.transaction
   );
 
-  const { firstName, lastName, traderInfo } = useSelector(
-    (state) => state.currentlyTradingUser
-  );
+
+    
+
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
 
+
+  const userInfo = useSelector((state) => state.currentlyTradingUser);
+
+  const { firstName, lastName, accountType, bitcoin, usd, traderInfo, id } =
+    userInfo;
+
+
   console.log(useSelector((state) => state.transaction.bitcoinAmount));
 
-  const onConfirm = () => {
+  const onConfirm = async () => {
     if (password === "") {
       toast.error("Please enter password");
       return;
@@ -33,7 +40,15 @@ const ConfirmTransaction = () => {
       toast.error("Incorrect password");
       return;
     }
-
+    await createTransaction(
+      id,
+      traderInfo.id,
+      transactionType,
+      usdAmount,
+      bitcoinAmount,
+      commissionAmount,
+      commissionType
+    )
     // Add Transaction To Cloud
 
     dispatch(

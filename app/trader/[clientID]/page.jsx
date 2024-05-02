@@ -6,7 +6,7 @@ import { updateTradingUser } from "@/app/_slices/currently-trading-user-slice";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getClientInfo } from "../../utils/supabase/dbcalls";
+import { getClientInfo, getClientBalance } from "../../utils/supabase/dbcalls";
 // const client = {
 //   name: "John Doe",
 //   accountType: "SILVER",
@@ -61,7 +61,9 @@ const ViewSpecificClient = () => {
 
   if (!client) return <div>Loading...</div>;
 
-  const tradeWithClient = () => {
+  const tradeWithClient  = async () => {
+    const balance = await getClientBalance(clientID);
+    console.log("balance: ", balance)
     dispatch(
       updateTradingUser({
         id: clientID,
@@ -71,8 +73,8 @@ const ViewSpecificClient = () => {
           id: id,
           title: name,
         },
-        bitcoin: 9999,
-        usd: 9999,
+        bitcoin: balance.bitcoin_balance,
+        usd: balance.fiat_balance,
         accountType: client.accountType,
       })
     );

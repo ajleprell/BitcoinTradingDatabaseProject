@@ -12,8 +12,8 @@ import CurrencyInput from "react-currency-input-field";
 import Dropdown from "../_components/dropdown";
 import { updateTradingUser } from "../_slices/currently-trading-user-slice";
 import { convertFromBitcoin } from "../_functions/bitcoin-conversions";
+import { deposit } from "../utils/supabase/dbcalls"
 
-const PASSWORD = "Test Password";
 
 const AddBitcoin = () => {
   const router = useRouter();
@@ -31,14 +31,23 @@ const AddBitcoin = () => {
   const dispatch = useDispatch();
 
   const onConfirm = () => {
+    // need trader ID, client ID, ammount, currency type, 
     if (password === "") {
       toast.error("Please enter password");
       return;
-    } else if (password !== PASSWORD) {
-      toast.error("Incorrect password");
-      return;
-    }
+    } 
 
+    const client_id = tradingUser.id
+  
+    let deposit_type = tradeCurrency.title
+    deposit_type = deposit_type.includes("Fiat") ? "Fiat" : "Bitcoin"
+    deposit(
+      client_id,
+      password,
+      tradeAmount,
+      deposit_type,
+      tradingUser.traderInfo.id
+    )
     // Add Transaction To Cloud
     // Add Bitcoin To Cloud Here
 

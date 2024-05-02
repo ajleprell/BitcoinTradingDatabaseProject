@@ -10,7 +10,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { updateBitcoinAmount } from "../_slices/transaction-slice";
 import addCommas from "../_reusable-functions/add-commas";
-
+import { createTransaction } from "../utils/supabase/dbcalls"
 import "react-toastify/dist/ReactToastify.css";
 import {
   convertFromBitcoin,
@@ -25,7 +25,7 @@ const COMMISSION_BASED_ON_ACCOUNT = {
 const Page = () => {
   const userInfo = useSelector((state) => state.currentlyTradingUser);
 
-  const { firstName, lastName, accountType, bitcoin, usd, traderInfo } =
+  const { firstName, lastName, accountType, bitcoin, usd, traderInfo, id } =
     userInfo;
   const [tradeAmount, setTradeAmount] = useState("");
   const [tradeCurrency, setTradeCurrency] = useState({
@@ -44,7 +44,7 @@ const Page = () => {
   console.log("Trade Currency:", tradeCurrency);
   console.log("Bitcoin Currency:", commissionCurrency);
 
-  const trade = () => {
+  const trade = async() => {
     const parsedTradeAmount = parseFloat(tradeAmount);
 
     console.log("Trade Amount:", parsedTradeAmount);
@@ -78,11 +78,13 @@ const Page = () => {
       toast.error("Insufficient USD");
       return;
     }
-
     dispatch(
       updateBitcoinAmount({
         usdAmount,
         bitcoinAmount,
+        commissionAmount: calculatedCommissionAmount,
+        transactionType: tradeCurrency.title,
+        commissionType: commissionCurrency.title
       })
     );
 

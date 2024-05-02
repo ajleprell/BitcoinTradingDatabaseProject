@@ -141,7 +141,7 @@ export default function Home() {
         ""
       );
     }
-
+    // NEED TO GET ACCOUNT INFO TOO
     const obj = {
       firstName: clientInfo.firstName,
       lastName: clientInfo.lastName,
@@ -164,8 +164,8 @@ export default function Home() {
         updateTradingUser({
           ...obj,
           traderInfo: selectedTrader,
-          bitcoin: 9999,
-          usd: 9999,
+          bitcoin: 0,
+          usd: 0,
         })
       ); // User that we are trading with in the trade page
 
@@ -194,22 +194,6 @@ export default function Home() {
       dispatch(updateTradingUser(signedInUser)); // User that we are trading with in the trade page
 
       router.push("/trade");
-    } else if (accountType==="Manager") {
-      const signedInUser = {
-        id: data.client_id,
-        firstName: data.first_name,
-        lastName: data.last_name,
-        phoneNumber: data.phone_number,
-        cellPhoneNumber: data.cell_phone_number,
-        email: data.email,
-        streetAddress: data.street_address,
-        city: data.city,
-        state: data.state,
-        zipCode: data.zip_code,
-        bitcoin: clientAccount.bitcoin_balance,
-        traderInfo: traderInfo,
-      };
-      router.push("/manager")
     }else{
       dispatch(createUser(signedInUser)); // User that is signed in
       router.push("/trader");
