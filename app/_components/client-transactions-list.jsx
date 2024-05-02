@@ -16,33 +16,41 @@ const ClientTransactionsList = ({ transactions }) => {
     if (!selectedFilter) return setFilteredTransactions(transactions);
 
     const today = new Date();
-    const week = new Date();
-    const month = new Date();
-    const year = new Date();
+    // Reset the time part of today to midnight
+    today.setHours(0, 0, 0, 0);
+
+    const week = new Date(today);
+    const month = new Date(today);
+    const year = new Date(today);
 
     week.setDate(today.getDate() - 7);
     month.setMonth(today.getMonth() - 1);
     year.setFullYear(today.getFullYear() - 1);
 
+    console.log("Selected Filter:", selectedFilter);
+
     const filtered = transactions.filter((transaction) => {
       const transactionDate = new Date(transaction.date);
+      transactionDate.setHours(0, 0, 0, 0); // Reset the time to midnight for comparison
 
       switch (selectedFilter) {
         case "today":
           return transactionDate.toDateString() === today.toDateString();
-        case "week":
+        case "this week":
           return transactionDate >= week;
-        case "month":
+        case "this month":
           return transactionDate >= month;
-        case "year":
+        case "this year":
           return transactionDate >= year;
         default:
           return true;
       }
     });
 
+    console.log("Filterd", filtered);
+
     setFilteredTransactions(filtered);
-  }, [selectedFilter]);
+  }, [selectedFilter, transactions]);
 
   const viewTransaction = (selectedTransaction) => {
     console.log("Selected Transgtion:", selectedTransaction);
