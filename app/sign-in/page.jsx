@@ -186,7 +186,7 @@ export default function Home() {
     if (signedInUser === false) {
       toast.error("Wrong email or password. Try again");
     }
-    console.log("user? ", signedInUser)
+    console.log("user? ", typeof signedInUser)
 
     
 
@@ -195,6 +195,7 @@ export default function Home() {
 
       router.push("/trade");
     }else{
+      console.log("signedInuser: ", signedInUser)
       dispatch(createUser(signedInUser)); // User that is signed in
       router.push("/trader");
     }

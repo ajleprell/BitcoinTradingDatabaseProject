@@ -5,7 +5,7 @@ import Button from "../_components/button";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import Input from "../_components/input";
-import {getAllClients} from "../utils/supabase/dbcalls";
+import {getAllClients,getEveryClient} from "../utils/supabase/dbcalls";
 
 
 const Trader = () => {
@@ -22,7 +22,12 @@ const Trader = () => {
   // Fetch traders from the database
   useEffect(() => {
     const fetchClients = async () => {
-      let fetchedClients = await getAllClients(trader.id);
+      let fetchedClients;
+      if(firstName === "Global" && lastName === "Manager"){
+         fetchedClients = await getEveryClient()
+      }else{
+         fetchedClients = await getAllClients(trader.id);
+      }
       fetchedClients= fetchedClients.map(t => ({ key: t.client_id, ...t }))
       
       setClients(fetchedClients); // Format the fetched traders

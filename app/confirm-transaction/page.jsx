@@ -8,8 +8,7 @@ import Input from "../_components/input";
 import Button from "../_components/button";
 import { ToastContainer, toast } from "react-toastify";
 import { setTransaction } from "../_slices/view-transaction-slice";
-import { createTransaction } from "../utils/supabase/dbcalls"
-const PASSWORD = "a";
+import { createTransaction, getClientPassword, cancelTransaction } from "../utils/supabase/dbcalls"
 
 const ConfirmTransaction = () => {
   const router = useRouter();
@@ -31,12 +30,27 @@ const ConfirmTransaction = () => {
 
 
   console.log(useSelector((state) => state.transaction.bitcoinAmount));
+  const onCancel = async () => {
+    const tranID = await createTransaction(
+      id,
+      traderInfo.id,
+      transactionType,
+      usdAmount,
+      bitcoinAmount,
+      commissionAmount,
+      commissionType
+    )
 
+    await cancelTransaction(tranID,traderInfo.id)
+
+    router.push("/trade")
+  }
   const onConfirm = async () => {
+    const clientPass = await getClientPassword(id)
     if (password === "") {
       toast.error("Please enter password");
       return;
-    } else if (password !== PASSWORD) {
+    } else if (password !== clientPass) {
       toast.error("Incorrect password");
       return;
     }
@@ -94,7 +108,8 @@ const ConfirmTransaction = () => {
         <div className="flex flex-col justify-end gap-y-12">
           <Button
             className="w-max self-end bg-red-500 hover:bg-red-600"
-            onClick={() => router.push("/trade")}
+            onClick={onCancel}
+            // onClick={() => router.push("/trade")}
           >
             Cancel Transaction
           </Button>

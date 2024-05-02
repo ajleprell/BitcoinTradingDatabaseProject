@@ -43,7 +43,7 @@ import { getClientInfo, getClientBalance } from "../../utils/supabase/dbcalls";
 
 const ViewSpecificClient = () => {
   const { clientID } = useParams();
-  const { id, name } = useSelector((state) => state.user);
+  const { id, firstName, lastName } = useSelector((state) => state.user);
   const [client, setClient] = useState(null);
   const router = useRouter();
   const dispatch = useDispatch();
@@ -52,12 +52,11 @@ const ViewSpecificClient = () => {
     const fetchClientInfo = async () => {
       // Fetch Client Info Here
       const client_info = await getClientInfo(clientID);
-
       setClient(client_info);
     };
 
     fetchClientInfo();
-  });
+  },[]);
 
   if (!client) return <div>Loading...</div>;
 
@@ -71,7 +70,7 @@ const ViewSpecificClient = () => {
         lastName: client.name.split(" ")[1],
         traderInfo: {
           id: id,
-          title: name,
+          title: firstName + " " + lastName,
         },
         bitcoin: balance.bitcoin_balance,
         usd: balance.fiat_balance,

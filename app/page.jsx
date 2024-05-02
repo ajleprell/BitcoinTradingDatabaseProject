@@ -12,7 +12,7 @@ const LandingPage = () => {
 
   const handleSelect = (accountType) => {
     dispatch(updateAccountType(accountType));
-
+    
     router.push("/sign-in");
   };
 

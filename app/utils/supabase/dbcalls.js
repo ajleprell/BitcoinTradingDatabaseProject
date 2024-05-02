@@ -2,6 +2,7 @@ import { createServerClient } from "./supabase.js";
 
 export async function loginClient(email, inputPassword, accountType) {
   const supabase = createServerClient();
+
   console.log("accountType: ", accountType);
   if (accountType === "Client") {
     const { data, error } = await supabase
@@ -13,6 +14,7 @@ export async function loginClient(email, inputPassword, accountType) {
     if (realPass !== inputPassword) {
       return false;
     }
+
     const traderID = data.trader_id;
     const { data: trader, traderError } = await supabase
       .from("Traders")
@@ -46,6 +48,29 @@ export async function loginClient(email, inputPassword, accountType) {
 
     return signedInUser;
   } else if (accountType === "Manager") {
+    await promoteClientsToGold();
+    const { data, error } = await supabase
+      .from("Managers")
+      .select("*")
+      .eq("email", email)
+      .single();
+    const realPass = data.password;
+    if (realPass !== inputPassword) {
+      return false;
+    }
+
+    const signedInUser = {
+      id: data.manager_id,
+      firstName: "Global",
+      lastName: "Manager",
+      phoneNumber: "root",
+      email: "root",
+      streetAddress: "root",
+      city: "root",
+      state: "root",
+      zipCode: "root",
+    };
+    return signedInUser;
   } else {
     const { data, error } = await supabase
       .from("Traders")
@@ -180,24 +205,25 @@ export async function getAllClients(trader_id) {
   return clients;
 }
 
-export async function getClientInfo(client_id) {
+export async function getClientInfo(clientId) {
   const supabase = createServerClient();
-  // Query the Clients table for the basic client information.
+
+  // Query the Clients table for basic client information.
   let { data: clientData, error: clientError } = await supabase
     .from("Clients")
     .select("first_name, last_name, classification_level")
-    .eq("client_id", client_id)
+    .eq("client_id", clientId)
     .single();
 
   if (clientError) {
-    console.error("Error fetching client data:", clientError);
+    console.error("Error fetching client data:", clientError.message);
     return;
   }
 
   const clientName = `${clientData.first_name} ${clientData.last_name}`;
   const accountType = clientData.classification_level.toUpperCase();
 
-  // Query the Transactions table for the client's transactions.
+  // Query the Transactions table for the client's transactions, excluding cancelled ones.
   let { data: transactionsData, error: transactionsError } = await supabase
     .from("Transactions")
     .select(
@@ -213,15 +239,36 @@ export async function getClientInfo(client_id) {
       Traders:trader_id(first_name, last_name)
     `
     )
-    .eq("client_id", client_id);
+    .eq("client_id", clientId);
 
   if (transactionsError) {
-    console.error("Error fetching transactions data:", transactionsError);
+    console.error(
+      "Error fetching transactions data:",
+      transactionsError.message
+    );
     return;
   }
 
+  // Filter out cancelled transactions
+  const { data: cancellationsData, error: cancellationsError } = await supabase
+    .from("Cancellations")
+    .select("transaction_id");
+
+  if (cancellationsError) {
+    console.error("Error fetching cancellations:", cancellationsError.message);
+    return;
+  }
+
+  const cancelledTransactionIds = new Set(
+    cancellationsData.map((c) => c.transaction_id)
+  );
+
+  const validTransactions = transactionsData.filter(
+    (trans) => !cancelledTransactionIds.has(trans.transaction_id)
+  );
+
   // Build the transactions array in the desired format.
-  const transactions = transactionsData.map((trans) => ({
+  const transactions = validTransactions.map((trans) => ({
     id: trans.transaction_id,
     date: new Date(trans.date).toLocaleDateString(),
     usdAmount: trans.fiat_amount,
@@ -238,8 +285,8 @@ export async function getClientInfo(client_id) {
     accountType: accountType,
     transactions: transactions,
   };
+
   return CLIENT_INFO;
-  // console.log(CLIENT_INFO);
 }
 
 export async function deposit(
@@ -388,4 +435,169 @@ export async function createTransaction(
   } else {
     console.log("Account updated successfully");
   }
+  return transactionData[0].transaction_id;
+}
+
+export async function getEveryClient() {
+  const supabase = createServerClient();
+  const { data: clients, error } = await supabase.from("Clients").select("*");
+
+  console.log("traders clients: ", clients);
+  return clients;
+}
+
+export async function promoteClientsToGold() {
+  const supabase = createServerClient();
+  // Fetch all clients
+  const { data: clients, error: clientsError } = await supabase
+    .from("Clients")
+    .select("client_id, classification_level");
+
+  if (clientsError) {
+    console.error("Error fetching clients:", clientsError.message);
+    return;
+  }
+
+  const today = new Date();
+  const lastMonth = new Date(today);
+  lastMonth.setMonth(today.getMonth() - 1);
+
+  for (const client of clients) {
+    if (client.classification_level === "Gold") {
+      continue; // Skip clients who are already Gold
+    }
+
+    // Count transactions in the last month for each client
+    const { data: transactionCount, error: transactionsError } = await supabase
+      .from("Transactions")
+      .select("transaction_id", { count: "exact" })
+      .eq("client_id", client.client_id)
+      .gte("date", lastMonth.toISOString().split("T")[0]);
+
+    if (transactionsError) {
+      console.error(
+        "Error fetching transactions for client:",
+        client.client_id,
+        transactionsError.message
+      );
+      continue;
+    }
+
+    if (transactionCount && transactionCount.length >= 20) {
+      // Promote client to Gold
+      const { error: updateError } = await supabase
+        .from("Clients")
+        .update({ classification_level: "Gold" })
+        .eq("client_id", client.client_id);
+
+      if (updateError) {
+        console.error(
+          "Error updating client:",
+          client.client_id,
+          updateError.message
+        );
+      } else {
+        console.log("Client", client.client_id, "promoted to Gold.");
+      }
+    }
+  }
+}
+
+export async function promoteClientToGold(clientId) {
+  const supabase = createServerClient();
+  const today = new Date();
+  const lastMonth = new Date(today);
+  lastMonth.setMonth(today.getMonth() - 1);
+
+  // Fetch the current client's classification level
+  const { data: clientData, error: clientError } = await supabase
+    .from("Clients")
+    .select("classification_level")
+    .eq("client_id", clientId)
+    .single();
+
+  if (clientError) {
+    console.error("Error fetching client:", clientError.message);
+    return;
+  }
+
+  if (clientData.classification_level === "Gold") {
+    console.log("Client", clientId, "is already Gold.");
+    return; // Client is already Gold
+  }
+
+  // Count transactions in the last month for this client
+  const { count: transactionCount, error: transactionsError } = await supabase
+    .from("Transactions")
+    .select("transaction_id", { count: "exact" })
+    .eq("client_id", clientId)
+    .gte("date", lastMonth.toISOString().split("T")[0]);
+
+  if (transactionsError) {
+    console.error("Error fetching transactions:", transactionsError.message);
+    return;
+  }
+
+  if (transactionCount >= 20) {
+    // Promote client to Gold
+    const { error: updateError } = await supabase
+      .from("Clients")
+      .update({ classification_level: "Gold" })
+      .eq("client_id", clientId);
+
+    if (updateError) {
+      console.error(
+        "Error updating client classification:",
+        updateError.message
+      );
+    } else {
+      console.log("Client", clientId, "promoted to Gold.");
+    }
+  } else {
+    console.log("Client", clientId, "does not qualify for promotion.");
+  }
+}
+
+export async function getClientPassword(clientId) {
+  const supabase = createServerClient();
+  // Fetch the client's password from the database
+  const { data: clientData, error: clientError } = await supabase
+    .from("Clients")
+    .select("password")
+    .eq("client_id", clientId)
+    .single();
+
+  if (clientError) {
+    console.error("Error fetching client password:", clientError.message);
+    return;
+  }
+  console.log(clientData);
+  return clientData.password;
+}
+
+export async function cancelTransaction(transactionId, traderId) {
+  const supabase = createServerClient();
+  // Insert into the Cancellations table
+  const { data: cancellationData, error: cancellationError } = await supabase
+    .from("Cancellations")
+    .insert([
+      {
+        cancellation_date: new Date(),
+        transaction_id: transactionId,
+        trader_id: traderId,
+      },
+    ])
+    .select();
+
+  if (cancellationError) {
+    console.error("Error cancelling transaction:", cancellationError.message);
+    return;
+  }
+
+  console.log(
+    "Transaction",
+    transactionId,
+    "cancelled successfully:",
+    cancellationData
+  );
 }
