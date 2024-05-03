@@ -10,7 +10,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { updateBitcoinAmount } from "../_slices/transaction-slice";
 import addCommas from "../_reusable-functions/add-commas";
-import { createTransaction } from "../utils/supabase/dbcalls"
+import { createTransaction } from "../utils/supabase/dbcalls";
 import "react-toastify/dist/ReactToastify.css";
 import {
   convertFromBitcoin,
@@ -41,28 +41,29 @@ const Page = () => {
   const dispatch = useDispatch();
   const router = useRouter();
 
-  console.log("Trade Currency:", tradeCurrency);
-  console.log("Bitcoin Currency:", commissionCurrency);
-
-  const trade = async() => {
+  const trade = async () => {
     const parsedTradeAmount = parseFloat(tradeAmount);
 
-    console.log("Trade Amount:", parsedTradeAmount);
-    console.log("Commission Amount:", calculatedCommissionAmount);
+    let usdAmount = usd;
+    let bitcoinAmount = bitcoin;
 
-    let usdAmount = 0;
-    let bitcoinAmount = 0;
+    let usdChange = 0;
+    let bitcoinChange = 0;
 
     if (tradeCurrency.title === "Fiat Currency") {
-      usdAmount += parsedTradeAmount;
+      usdAmount -= parsedTradeAmount;
+      usdChange -= parsedTradeAmount;
     } else {
-      bitcoinAmount += parsedTradeAmount;
+      bitcoinAmount -= parsedTradeAmount;
+      bitcoinChange -= parsedTradeAmount;
     }
 
     if (commissionCurrency.title === "Fiat Currency") {
-      usdAmount += calculatedCommissionAmount;
+      usdAmount -= calculatedCommissionAmount;
+      usdChange -= calculatedCommissionAmount;
     } else {
-      bitcoinAmount += calculatedCommissionAmount;
+      bitcoinAmount -= calculatedCommissionAmount;
+      bitcoinChange -= calculatedCommissionAmount;
     }
 
     if (!tradeCurrency) {
@@ -71,20 +72,37 @@ const Page = () => {
     } else if (parsedTradeAmount === "") {
       toast.error("Please enter bitcoin amount");
       return;
-    } else if (bitcoin < bitcoinAmount) {
+    } else if (bitcoinAmount < 0) {
       toast.error("Insufficient bitcoin");
       return;
-    } else if (usd < usdAmount) {
+    } else if (usdAmount < 0) {
       toast.error("Insufficient USD");
       return;
     }
+
+    if (tradeCurrency.title === "Fiat Currency") {
+      bitcoinAmount += parseFloat(await convertToBitcoin(parsedTradeAmount));
+      bitcoinChange += parseFloat(
+        await convertToBitcoin(calculatedCommissionAmount)
+      );
+    } else {
+      usdAmount += parseFloat(await convertFromBitcoin(parsedTradeAmount));
+      usdChange += parseFloat(
+        await convertFromBitcoin(calculatedCommissionAmount)
+      );
+    }
+
     dispatch(
       updateBitcoinAmount({
-        usdAmount,
-        bitcoinAmount,
+        usdAmountBefore: usd,
+        bitcoinAmountBefore: bitcoin,
+        usdAmountAfter: usdAmount,
+        bitcoinAmountAfter: bitcoinAmount,
+        bitcoinChange,
+        usdChange,
         commissionAmount: calculatedCommissionAmount,
         transactionType: tradeCurrency.title,
-        commissionType: commissionCurrency.title
+        commissionType: commissionCurrency.title,
       })
     );
 
@@ -143,7 +161,7 @@ const Page = () => {
           <CurrencyInput
             placeholder="Trade Amount"
             defaultValue={0}
-            decimalsLimit={2}
+            decimalsLimit={8}
             value={tradeAmount}
             onValueChange={(value, name, values) => setTradeAmount(value)}
             className="bg-[#F1F1F1] rounded-[14px] p-4 outline-none w-[450px]"
@@ -202,9 +220,7 @@ const Page = () => {
         </div>
         <div className="flex flex-col gap-y-[21px]">
           <div className="font-bold text-[40px]">
-            <span className="font-normal">
-              Total Trade Amount (In Bitcoin):
-            </span>{" "}
+            <span className="font-normal">Total Trade Amount:</span>{" "}
             <div className="text-5xl font-bold">
               {tradeAmount}{" "}
               {tradeCurrency.title === "Fiat Currency" ? "USD" : "BTC"} +{" "}

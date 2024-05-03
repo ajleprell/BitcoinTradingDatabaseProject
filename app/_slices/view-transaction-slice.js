@@ -8,6 +8,8 @@ export const viewTransactionSlice = createSlice({
     usdAmount: "",
     name: "",
     traderName: "",
+    bitcoinChange: 0,
+    usdChange: 0,
   },
   reducers: {
     setTransaction: (state, action) => {
@@ -16,6 +18,8 @@ export const viewTransactionSlice = createSlice({
       state.usdAmount = action.payload.usdAmount;
       state.name = action.payload.name;
       state.traderName = action.payload.traderName;
+      state.bitcoinChange = action.payload.bitcoinChange;
+      state.usdChange = action.payload.usdChange;
     },
   },
 });

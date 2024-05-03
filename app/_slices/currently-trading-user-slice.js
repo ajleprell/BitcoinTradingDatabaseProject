@@ -37,9 +37,14 @@ export const currentlyTradingUserSlice = createSlice({
       state.bitcoin = action.payload.bitcoin;
       state.usd = action.payload.usd;
     },
+    updateTradingBalance: (state, action) => {
+      state.bitcoin = action.payload.bitcoin;
+      state.usd = action.payload.usd;
+    },
   },
 });
 
-export const { updateTradingUser } = currentlyTradingUserSlice.actions;
+export const { updateTradingUser, updateTradingBalance } =
+  currentlyTradingUserSlice.actions;
 
 export default currentlyTradingUserSlice.reducer;

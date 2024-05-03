@@ -509,6 +509,11 @@ export async function createTransaction(
     updatedFiatBalance -= commission; // subtract fiat commission
   }
 
+  console.log("Updated Fiat Balance:", updatedFiatBalance);
+  console.log("Updated Bitcoin Balance:", updatedBitcoinBalance);
+
+  return;
+
   // Fetch the account ID
   const { data: accData, error: accError } = await supabase
     .from("Accounts")
@@ -535,7 +540,7 @@ export async function createTransaction(
     console.log("Account updated successfully");
   }
 
-  return transactionData[0].transaction_id;
+  return transactionData[0];
 }
 export async function getEveryClient() {
   const supabase = createServerClient();

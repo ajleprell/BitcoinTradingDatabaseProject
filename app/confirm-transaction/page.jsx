@@ -8,30 +8,38 @@ import Input from "../_components/input";
 import Button from "../_components/button";
 import { ToastContainer, toast } from "react-toastify";
 import { setTransaction } from "../_slices/view-transaction-slice";
-import { createTransaction, getClientPassword, cancelTransaction } from "../utils/supabase/dbcalls"
+import {
+  createTransaction,
+  getClientPassword,
+  cancelTransaction,
+} from "../utils/supabase/dbcalls";
+import { updateTradingBalance } from "../_slices/currently-trading-user-slice";
 
 const ConfirmTransaction = () => {
   const router = useRouter();
-  const { bitcoinAmount, usdAmount, transactionType, commissionType, commissionAmount } = useSelector(
-    (state) => state.transaction
-  );
-
-
-    
+  const {
+    bitcoinAmountBefore,
+    usdAmountBefore,
+    bitcoinAmountAfter,
+    usdAmountAfter,
+    transactionType,
+    commissionType,
+    commissionAmount,
+    bitcoinChange,
+    usdChange,
+  } = useSelector((state) => state.transaction);
 
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
-
 
   const userInfo = useSelector((state) => state.currentlyTradingUser);
 
   const { firstName, lastName, accountType, bitcoin, usd, traderInfo, id } =
     userInfo;
 
-
   console.log(useSelector((state) => state.transaction.bitcoinAmount));
   const onCancel = async () => {
-    const tranID = await createTransaction(
+    const { transaction_id } = await createTransaction(
       id,
       traderInfo.id,
       transactionType,
@@ -39,14 +47,14 @@ const ConfirmTransaction = () => {
       bitcoinAmount,
       commissionAmount,
       commissionType
-    )
+    );
 
-    await cancelTransaction(tranID,traderInfo.id)
+    await cancelTransaction(transaction_id, traderInfo.id);
 
-    router.push("/trade")
-  }
+    router.push("/trade");
+  };
   const onConfirm = async () => {
-    const clientPass = await getClientPassword(id)
+    const clientPass = await getClientPassword(id);
     if (password === "") {
       toast.error("Please enter password");
       return;
@@ -54,25 +62,32 @@ const ConfirmTransaction = () => {
       toast.error("Incorrect password");
       return;
     }
-    await createTransaction(
+
+    const transaction = await createTransaction(
       id,
       traderInfo.id,
       transactionType,
-      usdAmount,
-      bitcoinAmount,
+      usdAmountBefore,
+      bitcoinAmountBefore,
       commissionAmount,
       commissionType
-    )
+    );
     // Add Transaction To Cloud
+
+    return;
 
     dispatch(
       setTransaction({
         name: firstName + " " + lastName,
-        bitcoinAmount,
-        usdAmount,
+        bitcoinAmount: bitcoinChange,
+        usdAmount: usdChange,
         traderName: traderInfo.title,
         date: new Date().toLocaleDateString(),
       })
+    );
+
+    dispatch(
+      updateTradingBalance({ bitcoin: bitcoinAmountAfter, usd: usdAmountAfter })
     );
 
     router.push("/view-transaction");
@@ -84,16 +99,26 @@ const ConfirmTransaction = () => {
         <div>Transaction In Progress</div>
         <div>{new Date().toLocaleDateString()}</div>
       </div>
-      <div className="w-full h-full flex-row flex">
-        <div className="flex flex-col w-full h-full items-start justify-around">
+      <div className="w-full h-full flex-col flex py-12">
+        <div className="grid grid-cols-2 grid-rows-2 w-full h-full items-start justify-around">
           <h1 className="text-4xl font-medium">
-            Amount of Bitcoin to trade:{" "}
-            <span className="font-bold">{bitcoinAmount} BTC</span>
+            Amount in Account Bitcoin Before:{" "}
+            <span className="font-bold">{bitcoinAmountBefore} BTC</span>
           </h1>
           <h1 className="text-4xl font-medium">
-            Amount in USD:{" "}
+            Amount in Account Bitcoin After:{" "}
+            <span className="font-bold">{bitcoinAmountAfter} BTC</span>
+          </h1>
+          <h1 className="text-4xl font-medium">
+            Amount in Account USD Before:{" "}
             <span className="font-bold">
-              ${addCommas(usdAmount.toString())}
+              ${addCommas(usdAmountBefore.toFixed(2))}
+            </span>
+          </h1>
+          <h1 className="text-4xl font-medium">
+            Amount in Account USD After:{" "}
+            <span className="font-bold">
+              ${addCommas(usdAmountAfter.toFixed(2))}
             </span>
           </h1>
           <h1 className="text-4xl font-medium">
