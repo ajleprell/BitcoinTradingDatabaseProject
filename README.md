@@ -10,36 +10,27 @@ Ensure you have the following installed:
 
 Installation
 
-    Clone the repository:
+Clone the repository:
 
-    bash
 
-git clone <repository-url>
-cd <repository-directory>
+    git clone <repository-url>
+    cd <repository-directory>
 
 Install dependencies:
-
-bash
 
     npm install
 
 Running the Project
 
-    Start the development server:
+Start the development server:
 
-    bash
-
-npm run dev
+    npm run dev
 
 This will start a development server, typically accessible at http://localhost:3000.
 
 Building for production:
 
-bash
-
-npm run build
-
-
+    npm run build
 
 File Structure
 
@@ -48,5 +39,5 @@ File Structure
 
 Enviroment variables
 
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+    NEXT_PUBLIC_SUPABASE_URL=
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=
