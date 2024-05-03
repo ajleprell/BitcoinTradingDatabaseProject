@@ -449,7 +449,9 @@ export async function createTransaction(
   fiatAmount,
   bitcoinAmount,
   commission,
-  commissionType
+  commissionType,
+  bitcoinChange,
+  fiatChange
 ) {
   const supabase = createServerClient();
   // Insert into the Transactions table
@@ -462,8 +464,8 @@ export async function createTransaction(
         client_id: clientId,
         trader_id: traderId,
         transaction_type: transactionType,
-        fiat_amount: fiatAmount,
-        bitcoin_amount: bitcoinAmount,
+        fiat_amount: fiatChange,
+        bitcoin_amount: bitcoinChange,
         commission,
         commission_type: commissionType,
         date: new Date(),
@@ -481,7 +483,7 @@ export async function createTransaction(
   // Fetch client account balance
   const accountData = await getClientBalance(clientId);
 
-  let updatedFiatBalance = accountData.fiat_balance;
+  /*  let updatedFiatBalance = accountData.fiat_balance;
   updatedFiatBalance = +updatedFiatBalance;
   let updatedBitcoinBalance = accountData.bitcoin_balance;
   updatedBitcoinBalance = +updatedBitcoinBalance;
@@ -508,11 +510,7 @@ export async function createTransaction(
   } else if (commissionType === "Fiat") {
     updatedFiatBalance -= commission; // subtract fiat commission
   }
-
-  console.log("Updated Fiat Balance:", updatedFiatBalance);
-  console.log("Updated Bitcoin Balance:", updatedBitcoinBalance);
-
-  return;
+*/
 
   // Fetch the account ID
   const { data: accData, error: accError } = await supabase
@@ -529,8 +527,8 @@ export async function createTransaction(
   const { error: updateError } = await supabase
     .from("Accounts")
     .update({
-      fiat_balance: updatedFiatBalance,
-      bitcoin_balance: updatedBitcoinBalance,
+      fiat_balance: fiatAmount,
+      bitcoin_balance: bitcoinAmount,
     })
     .eq("account_id", accData[0].account_id);
 

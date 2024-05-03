@@ -43,10 +43,12 @@ const ConfirmTransaction = () => {
       id,
       traderInfo.id,
       transactionType,
-      usdAmount,
-      bitcoinAmount,
+      usdAmountAfter,
+      bitcoinAmountAfter,
       commissionAmount,
-      commissionType
+      commissionType,
+      bitcoinChange,
+      usdChange
     );
 
     await cancelTransaction(transaction_id, traderInfo.id);
@@ -67,14 +69,14 @@ const ConfirmTransaction = () => {
       id,
       traderInfo.id,
       transactionType,
-      usdAmountBefore,
-      bitcoinAmountBefore,
+      usdAmountAfter,
+      bitcoinAmountAfter,
       commissionAmount,
-      commissionType
+      commissionType,
+      bitcoinChange,
+      usdChange
     );
     // Add Transaction To Cloud
-
-    return;
 
     dispatch(
       setTransaction({
