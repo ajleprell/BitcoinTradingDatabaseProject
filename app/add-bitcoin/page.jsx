@@ -50,18 +50,19 @@ const AddBitcoin = () => {
     )
     // Add Transaction To Cloud
     // Add Bitcoin To Cloud Here
+    console.log("here: ", parseFloat(tradingUser.usd))
 
     if (accountType === "Client") {
       const newTradingUser = {
         ...tradingUser,
         bitcoin:
           tradeCurrency.title !== "Bitcoin"
-            ? parseFloat(tradingUser.bitcoin) + parseFloat(tradeAmount)
-            : parseFloat(tradingUser.bitcoin),
-        usd:
-          tradeCurrency.title === "Fiat Currency"
-            ? parseFloat(tradingUser.usd) + parseFloat(tradeAmount.usd)
-            : parseFloat(tradingUser.usd),
+            ? parseFloat(tradingUser.bitcoin) 
+            : parseFloat(tradingUser.bitcoin) + parseFloat(tradeAmount),
+        usd: tradeCurrency.title === "Fiat Currency"
+        ? parseFloat(tradingUser.usd) + parseFloat(tradeAmount)
+        : parseFloat(tradingUser.usd)
+          ,
       };
 
       dispatch(updateTradingUser(newTradingUser));

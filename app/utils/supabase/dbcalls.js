@@ -1,5 +1,8 @@
 import { createServerClient } from "./supabase.js";
-
+import {
+  convertToBitcoin,
+  convertFromBitcoin,
+} from "../../_functions/bitcoin-conversions.js";
 export async function loginClient(email, inputPassword, accountType) {
   const supabase = createServerClient();
 
@@ -30,6 +33,7 @@ export async function loginClient(email, inputPassword, accountType) {
       .select("*")
       .eq("client_id", data.client_id)
       .single();
+
     const signedInUser = {
       id: data.client_id,
       firstName: data.first_name,
@@ -45,7 +49,7 @@ export async function loginClient(email, inputPassword, accountType) {
       traderInfo: traderInfo,
       usd: clientAccount.fiat_balance,
     };
-
+    console.log("asdfasdf: ", signedInUser);
     return signedInUser;
   } else if (accountType === "Manager") {
     await promoteClientsToGold();
@@ -328,7 +332,8 @@ export async function deposit(
 
   // Step 3: Update the appropriate balance based on deposit type
   let balanceUpdate = {};
-
+  amount = +amount;
+  console.log("deposittype: ", typeof amount);
   if (deposit_type === "Bitcoin") {
     balanceUpdate = { bitcoin_balance: accounts.bitcoin_balance + amount };
   } else if (deposit_type === "Fiat") {
@@ -336,7 +341,7 @@ export async function deposit(
   } else {
     throw new Error("Invalid deposit type");
   }
-
+  console.log("balanced update: ", balanceUpdate);
   const { error: balanceError } = await supabase
     .from("Accounts")
     .update(balanceUpdate)
@@ -376,6 +381,67 @@ export async function getClientBalance(client_id) {
   return balance[0];
 }
 
+// export async function createTransaction(
+//   clientId,
+//   traderId,
+//   transactionType,
+//   fiatAmount,
+//   bitcoinAmount,
+//   commission,
+//   commissionType
+// ) {
+//   const supabase = createServerClient();
+//   // Insert into the Transactions table
+//   commissionType = commissionType.includes("Fiat") ? "Fiat" : "Bitcoin";
+//   const { data: transactionData, error: transactionError } = await supabase
+//     .from("Transactions")
+//     .insert([
+//       {
+//         client_id: clientId,
+//         trader_id: traderId,
+//         fiat_amount: fiatAmount,
+//         bitcoin_amount: bitcoinAmount,
+//         commission,
+//         commission_type: commissionType,
+//         date: new Date(),
+//       },
+//     ])
+//     .select();
+
+//   if (transactionError) {
+//     console.error("Error creating transaction:", transactionError.message);
+//     return;
+//   }
+
+//   console.log("Transaction created:", transactionData);
+
+//   const accountData = await getClientBalance(clientId);
+
+//   const updatedFiatBalance = accountData.fiat_balance - fiatAmount;
+
+//   const updatedBitcoinBalance = accountData.bitcoin_balance - bitcoinAmount;
+
+//   const { data: accId, error } = await supabase
+//     .from("Accounts")
+//     .select("account_id")
+//     .eq("client_id", clientId);
+
+//   // Update the account balance
+//   const { error: updateError } = await supabase
+//     .from("Accounts")
+//     .update({
+//       fiat_balance: updatedFiatBalance,
+//       bitcoin_balance: updatedBitcoinBalance,
+//     })
+//     .eq("account_id", accId[0].account_id);
+//   console.log("accid: ", accId);
+//   if (updateError) {
+//     console.error("Error updating account:", updateError.message);
+//   } else {
+//     console.log("Account updated successfully");
+//   }
+//   return transactionData[0].transaction_id;
+// }
 export async function createTransaction(
   clientId,
   traderId,
@@ -388,12 +454,14 @@ export async function createTransaction(
   const supabase = createServerClient();
   // Insert into the Transactions table
   commissionType = commissionType.includes("Fiat") ? "Fiat" : "Bitcoin";
+  transactionType = transactionType.includes("Fiat") ? "Fiat" : "Bitcoin";
   const { data: transactionData, error: transactionError } = await supabase
     .from("Transactions")
     .insert([
       {
         client_id: clientId,
         trader_id: traderId,
+        transaction_type: transactionType,
         fiat_amount: fiatAmount,
         bitcoin_amount: bitcoinAmount,
         commission,
@@ -410,16 +478,47 @@ export async function createTransaction(
 
   console.log("Transaction created:", transactionData);
 
+  // Fetch client account balance
   const accountData = await getClientBalance(clientId);
 
-  const updatedFiatBalance = accountData.fiat_balance - fiatAmount;
+  let updatedFiatBalance = accountData.fiat_balance;
+  updatedFiatBalance = +updatedFiatBalance;
+  let updatedBitcoinBalance = accountData.bitcoin_balance;
+  updatedBitcoinBalance = +updatedBitcoinBalance;
+  console.log("type: ", transactionType);
+  if (transactionType === "Bitcoin") {
+    // Convert bitcoin amount to fiat and update balances
+    let fiatEquivalent = await convertFromBitcoin(bitcoinAmount);
+    fiatEquivalent = +fiatEquivalent;
+    console.log("equivalent: ", fiatEquivalent);
+    updatedFiatBalance += fiatEquivalent;
+    updatedBitcoinBalance -= bitcoinAmount;
+  } else if (transactionType === "Fiat") {
+    // Convert fiat amount to bitcoin and update balances
+    let bitcoinEquivalent = await convertToBitcoin(fiatAmount);
+    bitcoinEquivalent = +bitcoinEquivalent;
+    updatedBitcoinBalance += bitcoinEquivalent;
+    updatedFiatBalance -= fiatAmount;
+  }
+  console.log("fiat: ", updatedFiatBalance);
+  console.log("btc: ", updatedBitcoinBalance);
+  // Adjust for commission
+  if (commissionType === "Bitcoin") {
+    updatedBitcoinBalance -= commission; // subtract bitcoin commission
+  } else if (commissionType === "Fiat") {
+    updatedFiatBalance -= commission; // subtract fiat commission
+  }
 
-  const updatedBitcoinBalance = accountData.bitcoin_balance - bitcoinAmount;
-
-  const { data: accId, error } = await supabase
+  // Fetch the account ID
+  const { data: accData, error: accError } = await supabase
     .from("Accounts")
     .select("account_id")
     .eq("client_id", clientId);
+
+  if (accError) {
+    console.error("Error fetching account ID:", accError.message);
+    return;
+  }
 
   // Update the account balance
   const { error: updateError } = await supabase
@@ -428,16 +527,16 @@ export async function createTransaction(
       fiat_balance: updatedFiatBalance,
       bitcoin_balance: updatedBitcoinBalance,
     })
-    .eq("account_id", accId[0].account_id);
-  console.log("accid: ", accId);
+    .eq("account_id", accData[0].account_id);
+
   if (updateError) {
     console.error("Error updating account:", updateError.message);
   } else {
     console.log("Account updated successfully");
   }
+
   return transactionData[0].transaction_id;
 }
-
 export async function getEveryClient() {
   const supabase = createServerClient();
   const { data: clients, error } = await supabase.from("Clients").select("*");
