@@ -33,18 +33,19 @@ const ClientTransactionsList = ({ transactions }) => {
       const transactionDate = new Date(transaction.date);
       transactionDate.setHours(0, 0, 0, 0); // Reset the time to midnight for comparison
 
+      
       switch (selectedFilter) {
         case "today":
-          return transactionDate.toDateString() === today.toDateString();
+            return transactionDate.getTime() === today.getTime();
         case "this week":
-          return transactionDate >= week;
+            return transactionDate >= week;
         case "this month":
-          return transactionDate >= month;
+            return transactionDate >= month;
         case "this year":
-          return transactionDate >= year;
+            return transactionDate >= year;
         default:
-          return true;
-      }
+            return true;
+    }
     });
 
     console.log("Filterd", filtered);

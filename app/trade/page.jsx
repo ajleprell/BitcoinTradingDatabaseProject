@@ -226,7 +226,7 @@ const Page = () => {
               className="text-blue-500 hover:text-blue-600 hover:underline cursor-pointer"
               onClick={() => router.push("/add-bitcoin")}
             >
-              Add Bitcoin
+              Deposit currenct (USD/BTC)
             </span>
           </div>
         </div>

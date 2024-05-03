@@ -75,13 +75,13 @@ const AddBitcoin = () => {
   return (
     <div className="flex flex-col justify-around items-start w-screen h-screen p-4">
       <div className="flex flex-row w-full justify-between font-bold text-6xl">
-        <div>Add Bitcoin to Client</div>
+        <div>Deposit to Client</div>
         <div>{new Date().toLocaleDateString()}</div>
       </div>
       <div className="w-full h-full flex-row flex">
         <div className="flex flex-col w-full h-full items-start justify-around">
           <div className="flex flex-col gap-y-[21px]">
-            <div className="font-bold text-[40px]">Trade Amount</div>
+            <div className="font-bold text-[40px]">Deposit Amount</div>
             <CurrencyInput
               placeholder="Trade Amount"
               defaultValue={0}
@@ -92,7 +92,7 @@ const AddBitcoin = () => {
             />
           </div>
           <div className="flex flex-col gap-y-[21px]">
-            <div className="font-bold text-[40px]">Trade Currency</div>
+            <div className="font-bold text-[40px]">Deposit Currency</div>
             <Dropdown
               options={[
                 { id: 1, title: "Fiat Currency" },
